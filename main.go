@@ -9,21 +9,24 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/evcraddock/goarticles/api/articles"
+	"github.com/evcraddock/goarticles/api/health"
 )
 
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func main() {
 	//TODO: Add to config
-	var timeoutWait = time.Second*15
+	var timeoutWait = time.Second * 15
 
-	r := mux.NewRouter()
-	r.HandleFunc("/health", healthCheck)
-	//TODO: Add Routes
+	r := mux.NewRouter().StrictSlash(true)
+
+	setupRoutes(r)
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -35,9 +38,9 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Service started on %v", srv.Addr)
+		log.Info("Service started on ", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil {
-			log.Println(err)
+			log.Warn(err)
 		}
 	}()
 
@@ -50,14 +53,12 @@ func main() {
 	defer cancel()
 
 	srv.Shutdown(ctx)
-	log.Println("Service shutting down")
+	log.Info("Service shutting down")
 	os.Exit(0)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" || r.Method == "HEAD" {
-		w.WriteHeader(200)
-	} else {
-		w.WriteHeader(405)
-	}
+func setupRoutes(r *mux.Router) {
+	articles.CreateRoutes(r)
+	health.CreateRoutes(r)
+
 }
