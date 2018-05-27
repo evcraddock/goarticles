@@ -1,39 +1,27 @@
 package articles
 
 import (
-	"gopkg.in/mgo.v2/bson"
-	"time"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/evcraddock/goarticles/models"
 )
 
-type Article struct {
-	ID     		bson.ObjectId 	`bson:"_id"`
-	Title  		string        	`json:"title"`
-	Author 		string			`json:"author"`
-	Url	 		string        	`json:"url"`
-	Content 	string        	`json:"content"`
-	DataSource	string 			`json:"dataSource"`
-	PublishDate	time.Time		`json:"publishDate"`
-}
-
-type Articles []Article
-
-type Repository struct{
-	Server string
+type Repository struct {
+	Server       string
 	DatabaseName string
 }
 
-
-func CreateArticleRepository() *Repository {
+func CreateArticleRepository(server, databaseName string) *Repository {
 	return &Repository{
-		Server: "localhost:27017",
-		DatabaseName: "articleDB",
+		Server:       server,
+		DatabaseName: databaseName,
 	}
 }
 
-func (r *Repository) GetArticles() Articles {
+func (r *Repository) GetArticles() models.Articles {
 	session, err := mgo.Dial(r.Server)
 	if err != nil {
 		log.Warn("Failed to establish connection to Mongo server:", err)
@@ -42,7 +30,7 @@ func (r *Repository) GetArticles() Articles {
 	defer session.Close()
 
 	c := session.DB(r.DatabaseName).C("articles")
-	results := Articles{}
+	results := models.Articles{}
 	if err := c.Find(nil).All(&results); err != nil {
 		log.Warn("Failed to write results:", err)
 	}
@@ -52,7 +40,7 @@ func (r *Repository) GetArticles() Articles {
 	return results
 }
 
-func (r *Repository) AddArticle(article Article) bool {
+func (r *Repository) AddArticle(article models.Article) (*models.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()
 
@@ -60,10 +48,10 @@ func (r *Repository) AddArticle(article Article) bool {
 	session.DB(r.DatabaseName).C("articles").Insert(article)
 	if err != nil {
 		log.Fatal(err)
-		return false
+		return nil, err
 	}
 
 	log.Debug("Added Article ID: ", article.ID)
 
-	return true
+	return &article, nil
 }

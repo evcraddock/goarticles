@@ -1,27 +1,32 @@
 package articles
 
 import (
-	"net/http"
 	"encoding/json"
-	"io/ioutil"
-	"io"
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
+	"net/http"
+
+	"fmt"
+	"github.com/evcraddock/goarticles/models"
 )
 
 type Controller struct {
-	Repository Repository
+	repository Repository
 }
 
-//func CreateArticleController(router *mux.Router) *Controller {
-//	repository := CreateArticleRepository()
-//	controller := Controller{Repository: *repository}
-//
-//	router.HandleFunc("/api/articles", controller.GetAll).Methods("GET")
-//	router.HandleFunc("/api/articles", controller.Add).Methods("POST")
-//}
+func CreateArticleController(router *mux.Router, config models.Config) {
+	server := fmt.Sprintf("%v:%v", config.DatabaseServer, config.DatabasePort)
+	repository := CreateArticleRepository(server, config.DatabaseName)
+	controller := Controller{repository: *repository}
+
+	router.HandleFunc("/api/articles", controller.GetAll).Methods("GET")
+	router.HandleFunc("/api/articles", controller.Add).Methods("POST")
+}
 
 func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {
-	articles := c.Repository.GetArticles()
+	articles := c.repository.GetArticles()
 
 	data, _ := json.Marshal(articles)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -33,7 +38,7 @@ func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
-	var article Article
+	var article models.Article
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -54,14 +59,17 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	success := c.Repository.AddArticle(article)
-	if !success {
+	newArticle, err := c.repository.AddArticle(article)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	data, _ := json.Marshal(newArticle)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
+	w.Write(data)
 
 	return
 }

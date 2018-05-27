@@ -1,0 +1,54 @@
+package models
+
+import (
+	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
+	"strings"
+	"time"
+)
+
+type Article struct {
+	ID          bson.ObjectId `bson:"_id"`
+	Title       string        `json:"title"`
+	Author      string        `json:"author"`
+	URL         string        `json:"url"`
+	Content     string        `json:"content"`
+	DataSource  string        `json:"dataSource"`
+	PublishDate time.Time     `json:"publishDate"`
+}
+
+type Articles []Article
+
+func (article *Article) UnmarshalJSON(j []byte) error {
+	var articleMap map[string]interface{}
+
+	err := json.Unmarshal(j, &articleMap)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range articleMap {
+		switch strings.ToLower(k) {
+		case "title":
+			article.Title = v.(string)
+		case "author":
+			article.Author = v.(string)
+		case "url":
+			article.URL = v.(string)
+		case "content":
+			article.Content = v.(string)
+		case "datasource":
+			article.DataSource = v.(string)
+		case "publishdate":
+			tvalue := v.(string)
+			t, err := time.Parse("2006-01-02", tvalue)
+			if err != nil {
+				return err
+			}
+
+			article.PublishDate = t
+		}
+	}
+
+	return nil
+}

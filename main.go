@@ -10,27 +10,28 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
+	"fmt"
 	"github.com/evcraddock/goarticles/api/articles"
 	"github.com/evcraddock/goarticles/api/health"
+	"github.com/evcraddock/goarticles/models"
 )
 
 func init() {
+	config := models.GetConfig()
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(config.LogLevel)
 }
 
 func main() {
-	//TODO: Add to config
-	var timeoutWait = time.Second * 15
+	config := models.GetConfig()
 
 	r := mux.NewRouter().StrictSlash(true)
 
-	setupRoutes(r)
+	setupRoutes(r, config)
 
 	srv := &http.Server{
-		Addr: "0.0.0.0:8080",
-		//TODO: configure host and port
+		Addr:         fmt.Sprintf("%v:%v", config.ServerAddress, config.ServerPort),
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
@@ -49,7 +50,7 @@ func main() {
 
 	<-c
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutWait)
+	ctx, cancel := context.WithTimeout(context.Background(), config.TimeoutWait)
 	defer cancel()
 
 	srv.Shutdown(ctx)
@@ -57,8 +58,8 @@ func main() {
 	os.Exit(0)
 }
 
-func setupRoutes(r *mux.Router) {
-	articles.CreateRoutes(r)
+func setupRoutes(r *mux.Router, config *models.Config) {
+	articles.CreateArticleController(r, *config)
 	health.CreateRoutes(r)
 
 }
