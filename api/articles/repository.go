@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/evcraddock/goarticles/models"
+	"fmt"
 )
 
 type Repository struct {
@@ -47,11 +48,44 @@ func (r *Repository) AddArticle(article models.Article) (*models.Article, error)
 	article.ID = bson.NewObjectId()
 	session.DB(r.DatabaseName).C("articles").Insert(article)
 	if err != nil {
-		log.Fatal(err)
+		log.Warn(err)
 		return nil, err
 	}
 
 	log.Debug("Added Article ID: ", article.ID)
 
 	return &article, nil
+}
+
+func (r Repository) UpdateArticle(article models.Article) (*models.Article, error) {
+	session, err := mgo.Dial(r.Server)
+	defer session.Close()
+	session.DB(r.DatabaseName).C("articles").UpdateId(article.ID, article)
+	if err != nil {
+		log.Warn(err)
+		return nil, err
+	}
+
+	log.Debug("Updated Article ID: ", article.ID)
+
+	return &article, nil
+}
+
+func (r Repository) DeleteArticle(id string) error {
+	session, err := mgo.Dial(r.Server)
+	defer session.Close()
+
+	if !bson.IsObjectIdHex(id) {
+		return fmt.Errorf("article doesn't exist")
+	}
+
+	oid := bson.ObjectIdHex(id)
+	if err = session.DB(r.DatabaseName).C("articles").RemoveId(oid); err != nil {
+		log.Warn(err)
+		return err
+	}
+
+	log.Debug("Delete Article ID: ", id)
+
+	return nil
 }

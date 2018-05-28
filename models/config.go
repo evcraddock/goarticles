@@ -20,10 +20,10 @@ func GetConfig() *Config {
 	config := &Config{
 		ServerAddress:  getConfigValue("ArticleServerAddress", "0.0.0.0").(string),
 		ServerPort:     getConfigValue("ArticleServerPort", "8080").(string),
-		LogLevel:       getConfigValue("ArticleServerLogLevel", log.InfoLevel).(log.Level),
-		DatabaseServer: getConfigValue("DatabaseServer", "127.0.0.1").(string),
-		DatabasePort:   getConfigValue("DatabasePort", "27017").(string),
-		DatabaseName:   getConfigValue("DatabaseName", "articleDB").(string),
+		LogLevel:       getConfigValue("ArticleServerLogLevel", log.DebugLevel).(log.Level),
+		DatabaseServer: getConfigValue("ArticleServerDatabaseServer", "127.0.0.1").(string),
+		DatabasePort:   getConfigValue("ArticleServerDatabasePort", "27017").(string),
+		DatabaseName:   getConfigValue("ArticleServerDatabaseName", "articleDB").(string),
 		TimeoutWait:    time.Second * time.Duration(getConfigValue("ArticleServerTimeoutWait", 15).(int)),
 	}
 

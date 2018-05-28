@@ -29,6 +29,8 @@ func (article *Article) UnmarshalJSON(j []byte) error {
 
 	for k, v := range articleMap {
 		switch strings.ToLower(k) {
+		case "id":
+			article.ID = bson.ObjectIdHex(v.(string))
 		case "title":
 			article.Title = v.(string)
 		case "author":
@@ -40,8 +42,7 @@ func (article *Article) UnmarshalJSON(j []byte) error {
 		case "datasource":
 			article.DataSource = v.(string)
 		case "publishdate":
-			tvalue := v.(string)
-			t, err := time.Parse("2006-01-02", tvalue)
+			t, err := time.Parse("2006-01-02", v.(string))
 			if err != nil {
 				return err
 			}
