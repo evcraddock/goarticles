@@ -23,9 +23,31 @@ func CreateArticleController(router *mux.Router, config models.Config) {
 	controller := Controller{repository: *repository}
 
 	router.HandleFunc("/api/articles", controller.GetAll).Methods("GET")
+	router.HandleFunc("/api/articles/{id}", controller.Get).Methods("GET")
 	router.HandleFunc("/api/articles", controller.Add).Methods("POST")
 	router.HandleFunc("/api/articles/{id}", controller.Update).Methods("PUT")
 	router.HandleFunc("/api/articles/{id}", controller.Delete).Methods("DELETE")
+}
+
+func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	article, err := c.repository.GetArticle(id)
+
+	if err != nil {
+		//TODO: return an error message
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	data, _ := json.Marshal(article)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+
+	return
 }
 
 func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {

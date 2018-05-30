@@ -22,7 +22,10 @@ func CreateArticleRepository(server, databaseName string) *Repository {
 	}
 }
 
+
 func (r *Repository) GetArticles() models.Articles {
+
+
 	session, err := mgo.Dial(r.Server)
 	if err != nil {
 		log.Warn("Failed to establish connection to Mongo server:", err)
@@ -39,6 +42,29 @@ func (r *Repository) GetArticles() models.Articles {
 	log.Debug("GetArticles returned ", len(results), " articles")
 
 	return results
+}
+
+func (r *Repository) GetArticle(id string) (*models.Article, error) {
+	session, err := mgo.Dial(r.Server)
+
+	if err != nil {
+		log.Warn("Failed to establish connection to Mongo server:", err)
+		return nil, err
+	}
+
+	defer session.Close()
+
+	c := session.DB(r.DatabaseName).C("articles")
+
+	result := models.Article{}
+	if err := c.FindId(bson.ObjectIdHex(id)).One(&result); err != nil {
+		log.Warn("Failed to write results:", err)
+		return nil, err
+	}
+
+	log.Debug("GetArticle returned ", result.ID)
+
+	return &result, nil
 }
 
 func (r *Repository) AddArticle(article models.Article) (*models.Article, error) {
