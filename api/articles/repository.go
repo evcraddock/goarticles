@@ -6,15 +6,18 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/evcraddock/goarticles/models"
 	"fmt"
+
+	"github.com/evcraddock/goarticles/models"
 )
 
+//Repository model
 type Repository struct {
 	Server       string
 	DatabaseName string
 }
 
+//CreateArticleRepository creates a new repository
 func CreateArticleRepository(server, databaseName string) *Repository {
 	return &Repository{
 		Server:       server,
@@ -22,9 +25,8 @@ func CreateArticleRepository(server, databaseName string) *Repository {
 	}
 }
 
-
-func (r *Repository) GetArticles() models.Articles {
-
+//GetArticles returns queried articles from database
+func (r *Repository) GetArticles(query map[string]interface{}) models.Articles {
 
 	session, err := mgo.Dial(r.Server)
 	if err != nil {
@@ -35,7 +37,7 @@ func (r *Repository) GetArticles() models.Articles {
 
 	c := session.DB(r.DatabaseName).C("articles")
 	results := models.Articles{}
-	if err := c.Find(nil).All(&results); err != nil {
+	if err := c.Find(query).All(&results); err != nil {
 		log.Warn("Failed to write results:", err)
 	}
 
@@ -44,6 +46,7 @@ func (r *Repository) GetArticles() models.Articles {
 	return results
 }
 
+//GetArticle returns article by Id
 func (r *Repository) GetArticle(id string) (*models.Article, error) {
 	session, err := mgo.Dial(r.Server)
 
@@ -67,6 +70,7 @@ func (r *Repository) GetArticle(id string) (*models.Article, error) {
 	return &result, nil
 }
 
+//AddArticle add article to database
 func (r *Repository) AddArticle(article models.Article) (*models.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()
@@ -83,6 +87,7 @@ func (r *Repository) AddArticle(article models.Article) (*models.Article, error)
 	return &article, nil
 }
 
+//UpdateArticle updates article
 func (r Repository) UpdateArticle(article models.Article) (*models.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()
@@ -97,6 +102,7 @@ func (r Repository) UpdateArticle(article models.Article) (*models.Article, erro
 	return &article, nil
 }
 
+//DeleteArticle deletes article
 func (r Repository) DeleteArticle(id string) error {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()

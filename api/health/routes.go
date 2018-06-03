@@ -1,10 +1,12 @@
 package health
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
+//CreateRoutes create health check route
 func CreateRoutes(router *mux.Router) {
 	router.HandleFunc("/api/health", healthCheck).Methods("GET")
 }

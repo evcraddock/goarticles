@@ -2,11 +2,13 @@ package models
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"strings"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
+//Article model
 type Article struct {
 	ID          bson.ObjectId `bson:"_id"`
 	Title       string        `json:"title"`
@@ -17,8 +19,10 @@ type Article struct {
 	PublishDate time.Time     `json:"publishDate"`
 }
 
+//Articles collection of articles
 type Articles []Article
 
+//UnmarshalJSON custom Unmarshal function for article model
 func (article *Article) UnmarshalJSON(j []byte) error {
 	var articleMap map[string]interface{}
 

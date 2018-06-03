@@ -2,34 +2,40 @@ package articles
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
+
 	"fmt"
+	"net/url"
+
 	"github.com/evcraddock/goarticles/models"
 	"gopkg.in/mgo.v2/bson"
 )
 
+//Controller model
 type Controller struct {
 	repository Repository
 }
 
+//CreateArticleController creates controller and sets routes
 func CreateArticleController(router *mux.Router, config models.Config) {
 	server := fmt.Sprintf("%v:%v", config.DatabaseServer, config.DatabasePort)
 	repository := CreateArticleRepository(server, config.DatabaseName)
 	controller := Controller{repository: *repository}
 
 	router.HandleFunc("/api/articles", controller.GetAll).Methods("GET")
-	router.HandleFunc("/api/articles/{id}", controller.Get).Methods("GET")
+	router.HandleFunc("/api/articles/{id}", controller.GetByID).Methods("GET")
 	router.HandleFunc("/api/articles", controller.Add).Methods("POST")
 	router.HandleFunc("/api/articles/{id}", controller.Update).Methods("PUT")
 	router.HandleFunc("/api/articles/{id}", controller.Delete).Methods("DELETE")
 }
 
-func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
+//GetByID returns article by article Id
+func (c *Controller) GetByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -46,12 +52,15 @@ func (c *Controller) Get(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
-
 	return
 }
 
+//GetAll returns all queried articles
 func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {
-	articles := c.repository.GetArticles()
+
+	vars := r.URL.Query()
+	query := c.createQuery(vars)
+	articles := c.repository.GetArticles(query)
 
 	data, _ := json.Marshal(articles)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -62,6 +71,7 @@ func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+//Add adds new article
 func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	var article models.Article
 
@@ -99,6 +109,7 @@ func (c *Controller) Add(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+//Update updates existing article
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -150,6 +161,7 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+//Delete deletes requested article
 func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -164,4 +176,15 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	return
+}
+
+func (c *Controller) createQuery(url url.Values) bson.M {
+	query := make(bson.M)
+
+	//TODO: create and check white list, parse dates and id differently
+	for k, v := range url {
+		query[k] = v[0]
+	}
+
+	return query
 }

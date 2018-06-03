@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"fmt"
+
 	"github.com/evcraddock/goarticles/api/articles"
 	"github.com/evcraddock/goarticles/api/health"
 	"github.com/evcraddock/goarticles/models"
@@ -61,5 +62,4 @@ func main() {
 func setupRoutes(r *mux.Router, config *models.Config) {
 	articles.CreateArticleController(r, *config)
 	health.CreateRoutes(r)
-
 }
