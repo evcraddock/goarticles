@@ -30,7 +30,7 @@ func (r *Repository) GetArticles(query map[string]interface{}) models.Articles {
 
 	session, err := mgo.Dial(r.Server)
 	if err != nil {
-		log.Warn("Failed to establish connection to Mongo server:", err)
+		log.Warn("Failed to establish connection to database:", err)
 	}
 
 	defer session.Close()
@@ -51,7 +51,7 @@ func (r *Repository) GetArticle(id string) (*models.Article, error) {
 	session, err := mgo.Dial(r.Server)
 
 	if err != nil {
-		log.Warn("Failed to establish connection to Mongo server:", err)
+		log.Warn("Failed to establish connection to database:", err)
 		return nil, err
 	}
 

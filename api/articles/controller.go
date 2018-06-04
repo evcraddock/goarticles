@@ -178,12 +178,20 @@ func (c *Controller) Delete(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (c *Controller) createQuery(url url.Values) bson.M {
+func (c *Controller) createQuery(vars url.Values) bson.M {
 	query := make(bson.M)
 
 	//TODO: create and check white list, parse dates and id differently
-	for k, v := range url {
-		query[k] = v[0]
+	for k, v := range vars {
+		switch k {
+		case "categories":
+			query[k] = bson.M{"$in": v}
+		case "tags":
+			query[k] = bson.M{"$in": v}
+		default:
+			query[k] = v[0]
+		}
+
 	}
 
 	return query

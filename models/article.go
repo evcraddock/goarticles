@@ -17,6 +17,8 @@ type Article struct {
 	Content     string        `json:"content"`
 	DataSource  string        `json:"dataSource"`
 	PublishDate time.Time     `json:"publishDate"`
+	Categories  []string      `json:"categories"`
+	Tags        []string      `json:"tags"`
 }
 
 //Articles collection of articles
@@ -52,6 +54,20 @@ func (article *Article) UnmarshalJSON(j []byte) error {
 			}
 
 			article.PublishDate = t
+		case "categories":
+			cats := make([]string, 0)
+			for _, v := range v.([]interface{}) {
+				cats = append(cats, v.(string))
+			}
+
+			article.Categories = cats
+		case "tags":
+			tags := make([]string, 0)
+			for _, v := range v.([]interface{}) {
+				tags = append(tags, v.(string))
+			}
+
+			article.Tags = tags
 		}
 	}
 
