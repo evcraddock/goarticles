@@ -1,11 +1,13 @@
 package models
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
+//Config configuration settings
 type Config struct {
 	ServerAddress  string
 	ServerPort     string
@@ -14,8 +16,11 @@ type Config struct {
 	DatabasePort   string
 	DatabaseName   string
 	TimeoutWait    time.Duration
+	AuthDomain     string
+	Audience       string
 }
 
+//GetConfig get configuration value from env variable or return default
 func GetConfig() *Config {
 	config := &Config{
 		ServerAddress:  getConfigValue("ArticleServerAddress", "0.0.0.0").(string),
@@ -25,6 +30,8 @@ func GetConfig() *Config {
 		DatabasePort:   getConfigValue("ArticleServerDatabasePort", "27017").(string),
 		DatabaseName:   getConfigValue("ArticleServerDatabaseName", "articleDB").(string),
 		TimeoutWait:    time.Second * time.Duration(getConfigValue("ArticleServerTimeoutWait", 15).(int)),
+		AuthDomain:     getConfigValue("ArticleServiceAuthDomain", "erikvan.auth0.com").(string),
+		Audience:       getConfigValue("ArticleServiceAudience", "https://api.erikvancraddock.com").(string),
 	}
 
 	return config
