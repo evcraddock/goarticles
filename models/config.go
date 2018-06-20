@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
@@ -61,7 +60,12 @@ func LoadConfig(filename string) (*Configuration, error) {
 }
 
 //LoadEnvironmentVariables load from env variables
-func LoadEnvironmentVariables() *Configuration {
+//TODO: return error if env variables are empty
+func LoadEnvironmentVariables() (*Configuration, error) {
+	timeout, err := time.ParseDuration(os.Getenv("GOA_DB_TIMEOUT"))
+	if err != nil {
+		return nil, err
+	}
 
 	return &Configuration{
 		ServerConfiguration{
@@ -73,11 +77,11 @@ func LoadEnvironmentVariables() *Configuration {
 			Address:      os.Getenv("GOA_DB_ADDRESS"),
 			Port:         os.Getenv("GOA_DB_PORT"),
 			DatabaseName: os.Getenv("GOA_DB_DATABASENAME"),
-			Timeout:      viper.GetDuration("GOA_DB_TIMEOUT"),
+			Timeout:      timeout,
 		},
 		AuthenticationConfiguration{
 			Domain:   os.Getenv("GOA_AUTH_DOMAIN"),
 			Audience: os.Getenv("GOA_AUTH_AUDIENCE"),
 		},
-	}
+	}, nil
 }

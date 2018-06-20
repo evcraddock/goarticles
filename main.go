@@ -23,17 +23,25 @@ import (
 var config *models.Configuration
 
 func init() {
-	configFile := flag.String("configfile", "config.yml", "yaml configuration file (optional)")
-	flag.Parse()
-
-	if *configFile != "" {
-		config, _ = models.LoadConfig(*configFile)
-	} else {
-		config = models.LoadEnvironmentVariables()
-	}
-
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
+
+	configFile := flag.String("configfile", "", "yaml configuration file (optional)")
+	flag.Parse()
+
+	var err error
+
+	if *configFile != "" {
+		config, err = models.LoadConfig(*configFile)
+	} else {
+		config, err = models.LoadEnvironmentVariables()
+	}
+
+	if err != nil {
+		log.Error(err.Error())
+		panic(err)
+	}
+
 	setLogLevel(config.Server.LogLevel)
 }
 
