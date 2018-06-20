@@ -12,35 +12,32 @@ import (
 
 	"fmt"
 
+	"flag"
+
 	"github.com/evcraddock/goarticles/api/articles"
 	"github.com/evcraddock/goarticles/api/health"
 	"github.com/evcraddock/goarticles/models"
 	"github.com/evcraddock/goarticles/services"
 )
 
+var config *models.Configuration
+
 func init() {
-	config := models.GetConfig()
+	configFile := flag.String("configfile", "config.yml", "yaml configuration file (optional)")
+	flag.Parse()
+
+	if *configFile != "" {
+		config, _ = models.LoadConfig(*configFile)
+	} else {
+		config = models.LoadEnvironmentVariables()
+	}
+
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(config.LogLevel)
+	setLogLevel(config.Server.LogLevel)
 }
 
-//
-//type Jwks struct {
-//	Keys []JSONWebKeys `json:"keys"`
-//}
-//
-//type JSONWebKeys struct {
-//	Kty string   `json:"kty"`
-//	Kid string   `json:"kid"`
-//	Use string   `json:"use"`
-//	N   string   `json:"n"`
-//	E   string   `json:"e"`
-//	X5c []string `json:"x5c"`
-//}
-
 func main() {
-	config := models.GetConfig()
 	auth := services.NewAuthorization(config)
 
 	r := mux.NewRouter().StrictSlash(true)
@@ -48,7 +45,7 @@ func main() {
 	setupRoutes(r, config)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf("%v:%v", config.ServerAddress, config.ServerPort),
+		Addr:         fmt.Sprintf("%v:%v", config.Server.Address, config.Server.Port),
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
@@ -67,7 +64,7 @@ func main() {
 
 	<-c
 
-	ctx, cancel := context.WithTimeout(context.Background(), config.TimeoutWait)
+	ctx, cancel := context.WithTimeout(context.Background(), config.Database.Timeout)
 	defer cancel()
 
 	srv.Shutdown(ctx)
@@ -75,7 +72,7 @@ func main() {
 	os.Exit(0)
 }
 
-func setupRoutes(r *mux.Router, config *models.Config) {
+func setupRoutes(r *mux.Router, config *models.Configuration) {
 	articleController := articles.CreateArticleController(*config)
 	r.HandleFunc("/api/articles", articleController.GetAll).Methods("GET")
 	r.HandleFunc("/api/articles/{id}", articleController.GetByID).Methods("GET")
@@ -86,35 +83,13 @@ func setupRoutes(r *mux.Router, config *models.Config) {
 	health.CreateRoutes(r)
 }
 
-//
-//func getPemCert(token *jwt.Token, config *models.Config) (string, error) {
-//	cert := ""
-//	resp, err := http.Get("https://" + config.AuthDomain + "/.well-known/jwks.json")
-//
-//	if err != nil {
-//		log.Debug(err)
-//		return cert, err
-//	}
-//
-//	defer resp.Body.Close()
-//
-//	var jwks = Jwks{}
-//	err = json.NewDecoder(resp.Body).Decode(&jwks)
-//
-//	if err != nil {
-//		return cert, err
-//	}
-//
-//	for k := range jwks.Keys {
-//		if token.Header["kid"] == jwks.Keys[k].Kid {
-//			cert = "-----BEGIN CERTIFICATE-----\n" + jwks.Keys[k].X5c[0] + "\n-----END CERTIFICATE-----"
-//		}
-//	}
-//
-//	if cert == "" {
-//		err := errors.New("unable to find appropriate key")
-//		return cert, err
-//	}
-//
-//	return cert, nil
-//}
+func setLogLevel(logLevel string) log.Level {
+	switch logLevel {
+	case "debug":
+		return log.DebugLevel
+	case "error":
+		return log.ErrorLevel
+	default:
+		return log.InfoLevel
+	}
+}

@@ -35,10 +35,10 @@ type JSONWebKeys struct {
 }
 
 //NewAuthorization create new authorization
-func NewAuthorization(config *models.Config) Authorization {
+func NewAuthorization(config *models.Configuration) Authorization {
 	auth := Authorization{
-		domain:   config.AuthDomain,
-		audience: config.Audience,
+		domain:   config.Authentication.Domain,
+		audience: config.Authentication.Audience,
 	}
 
 	auth.Middleware = jwtmiddleware.New(jwtmiddleware.Options{

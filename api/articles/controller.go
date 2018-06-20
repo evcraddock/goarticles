@@ -22,9 +22,9 @@ type Controller struct {
 }
 
 //CreateArticleController creates controller and sets routes
-func CreateArticleController(config models.Config) Controller {
-	server := fmt.Sprintf("%v:%v", config.DatabaseServer, config.DatabasePort)
-	repository := CreateArticleRepository(server, config.DatabaseName)
+func CreateArticleController(config models.Configuration) Controller {
+	dbserver := fmt.Sprintf("%v:%v", config.Database.Address, config.Database.Port)
+	repository := CreateArticleRepository(dbserver, config.Database.DatabaseName)
 	controller := Controller{repository: *repository}
 
 	return controller

@@ -1,0 +1,14 @@
+server:
+  address:  "localhost"
+  port:     8080
+  loglevel: "info"
+
+database:
+  address:      "localhost"
+  port:         "27017"
+  databasename: "articleDB"
+  timeout:      15
+
+authentication:
+  domain:     "erikvan.auth0.com"
+  audience:   "https://api.erikvancraddock.com"
