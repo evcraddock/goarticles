@@ -19,7 +19,6 @@ type Configuration struct {
 
 //ServerConfiguration server config data
 type ServerConfiguration struct {
-	Address  string `yaml:"address"`
 	Port     string `yaml:"port"`
 	LogLevel string `yaml:"loglevel"`
 }
@@ -69,7 +68,6 @@ func LoadEnvironmentVariables() (*Configuration, error) {
 
 	return &Configuration{
 		ServerConfiguration{
-			Address:  os.Getenv("GOA_SERVER_ADDRESS"),
 			Port:     os.Getenv("GOA_SERVER_PORT"),
 			LogLevel: os.Getenv("GOA_LOG_LEVEL"),
 		},

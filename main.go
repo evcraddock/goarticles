@@ -53,7 +53,7 @@ func main() {
 	setupRoutes(r, config)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf("%v:%v", config.Server.Address, config.Server.Port),
+		Addr:         fmt.Sprintf(":%v", config.Server.Port),
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
