@@ -22,16 +22,12 @@ type Controller struct {
 }
 
 //CreateArticleController creates controller and sets routes
-func CreateArticleController(router *mux.Router, config models.Config) {
-	server := fmt.Sprintf("%v:%v", config.DatabaseServer, config.DatabasePort)
-	repository := CreateArticleRepository(server, config.DatabaseName)
+func CreateArticleController(config models.Configuration) Controller {
+	dbserver := fmt.Sprintf("%v:%v", config.Database.Address, config.Database.Port)
+	repository := CreateArticleRepository(dbserver, config.Database.DatabaseName)
 	controller := Controller{repository: *repository}
 
-	router.HandleFunc("/api/articles", controller.GetAll).Methods("GET")
-	router.HandleFunc("/api/articles/{id}", controller.GetByID).Methods("GET")
-	router.HandleFunc("/api/articles", controller.Add).Methods("POST")
-	router.HandleFunc("/api/articles/{id}", controller.Update).Methods("PUT")
-	router.HandleFunc("/api/articles/{id}", controller.Delete).Methods("DELETE")
+	return controller
 }
 
 //GetByID returns article by article Id

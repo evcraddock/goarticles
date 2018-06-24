@@ -12,37 +12,58 @@ import (
 
 	"fmt"
 
+	"flag"
+
 	"github.com/evcraddock/goarticles/api/articles"
 	"github.com/evcraddock/goarticles/api/health"
 	"github.com/evcraddock/goarticles/models"
+	"github.com/evcraddock/goarticles/services"
 )
 
+var config *models.Configuration
+
 func init() {
-	config := models.GetConfig()
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-	log.SetLevel(config.LogLevel)
+
+	configFile := flag.String("configfile", "", "yaml configuration file (optional)")
+	flag.Parse()
+
+	var err error
+
+	if *configFile != "" {
+		config, err = models.LoadConfig(*configFile)
+	} else {
+		config, err = models.LoadEnvironmentVariables()
+	}
+
+	if err != nil {
+		log.Error(err.Error())
+		panic(err)
+	}
+
+	setLogLevel(config.Server.LogLevel)
 }
 
 func main() {
-	config := models.GetConfig()
+	auth := services.NewAuthorization(config)
 
 	r := mux.NewRouter().StrictSlash(true)
 
 	setupRoutes(r, config)
 
 	srv := &http.Server{
-		Addr:         fmt.Sprintf("%v:%v", config.ServerAddress, config.ServerPort),
+		Addr:         fmt.Sprintf(":%v", config.Server.Port),
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      r,
+		Handler:      auth.Middleware.Handler(r),
 	}
 
 	go func() {
 		log.Info("Service started on ", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil {
-			log.Warn(err)
+			log.Info(err)
 		}
 	}()
 
@@ -51,7 +72,7 @@ func main() {
 
 	<-c
 
-	ctx, cancel := context.WithTimeout(context.Background(), config.TimeoutWait)
+	ctx, cancel := context.WithTimeout(context.Background(), config.Database.Timeout)
 	defer cancel()
 
 	srv.Shutdown(ctx)
@@ -59,7 +80,24 @@ func main() {
 	os.Exit(0)
 }
 
-func setupRoutes(r *mux.Router, config *models.Config) {
-	articles.CreateArticleController(r, *config)
+func setupRoutes(r *mux.Router, config *models.Configuration) {
+	articleController := articles.CreateArticleController(*config)
+	r.HandleFunc("/api/articles", articleController.GetAll).Methods("GET")
+	r.HandleFunc("/api/articles/{id}", articleController.GetByID).Methods("GET")
+	r.HandleFunc("/api/articles", articleController.Add).Methods("POST")
+	r.HandleFunc("/api/articles/{id}", articleController.Update).Methods("PUT")
+	r.HandleFunc("/api/articles/{id}", articleController.Delete).Methods("DELETE")
+
 	health.CreateRoutes(r)
+}
+
+func setLogLevel(logLevel string) log.Level {
+	switch logLevel {
+	case "debug":
+		return log.DebugLevel
+	case "error":
+		return log.ErrorLevel
+	default:
+		return log.InfoLevel
+	}
 }
