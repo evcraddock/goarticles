@@ -46,8 +46,11 @@ func (c *Controller) GetByID(w http.ResponseWriter, r *http.Request) {
 	data, _ := json.Marshal(article)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
+	log.Info("GetByID articles")
+
 	return
 }
 
@@ -59,11 +62,13 @@ func (c *Controller) GetAll(w http.ResponseWriter, r *http.Request) {
 	articles := c.repository.GetArticles(query)
 
 	data, _ := json.Marshal(articles)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 
+	log.Info("GetAll articles")
 	return
 }
 

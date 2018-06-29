@@ -49,6 +49,13 @@ func NewAuthorization(config *models.Configuration) Authorization {
 	return auth
 }
 
+func (auth *Authorization) Authorize(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		auth.Middleware.HandlerWithNext(w, r, next)
+		//auth.Middleware.CheckJWT()
+	}
+}
+
 func (auth *Authorization) validateToken(token *jwt.Token) (interface{}, error) {
 	aud := auth.audience
 	checkAud := token.Claims.(jwt.MapClaims).VerifyAudience(aud, false)

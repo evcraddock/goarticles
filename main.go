@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
@@ -46,18 +47,20 @@ func init() {
 }
 
 func main() {
-	auth := services.NewAuthorization(config)
-
-	r := mux.NewRouter().StrictSlash(true)
-
+	r := mux.NewRouter()
+	r.StrictSlash(true)
 	setupRoutes(r, config)
+
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%v", config.Server.Port),
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      auth.Middleware.Handler(r),
+		Handler:      handlers.CORS(headersOk, originsOk, methodsOk)(r),
 	}
 
 	go func() {
@@ -81,12 +84,23 @@ func main() {
 }
 
 func setupRoutes(r *mux.Router, config *models.Configuration) {
+	auth := services.NewAuthorization(config)
+
 	articleController := articles.CreateArticleController(*config)
-	r.HandleFunc("/api/articles", articleController.GetAll).Methods("GET")
-	r.HandleFunc("/api/articles/{id}", articleController.GetByID).Methods("GET")
-	r.HandleFunc("/api/articles", articleController.Add).Methods("POST")
-	r.HandleFunc("/api/articles/{id}", articleController.Update).Methods("PUT")
-	r.HandleFunc("/api/articles/{id}", articleController.Delete).Methods("DELETE")
+
+	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	})
+
+	r.HandleFunc("/api/articles", auth.Authorize(articleController.GetAll)).Methods("GET")
+	r.HandleFunc("/api/articles/{id}", auth.Authorize(articleController.GetByID)).Methods("GET")
+	r.HandleFunc("/api/articles", auth.Authorize(articleController.Add)).Methods("POST")
+	r.HandleFunc("/api/articles/{id}", auth.Authorize(articleController.Update)).Methods("PUT")
+	r.HandleFunc("/api/articles/{id}", auth.Authorize(articleController.Delete)).Methods("DELETE")
 
 	health.CreateRoutes(r)
 }
