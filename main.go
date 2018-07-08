@@ -33,8 +33,10 @@ func init() {
 	var err error
 
 	if *configFile != "" {
+		log.Info("Loading configuration from config file")
 		config, err = models.LoadConfig(*configFile)
 	} else {
+		log.Info("Loading configuration from environment variables")
 		config, err = models.LoadEnvironmentVariables()
 	}
 
@@ -43,7 +45,9 @@ func init() {
 		panic(err)
 	}
 
-	setLogLevel(config.Server.LogLevel)
+	loglevel := setLogLevel(config.Server.LogLevel)
+	log.Infof("LogLevel: %v", loglevel)
+	log.SetLevel(loglevel)
 }
 
 func main() {
@@ -66,7 +70,7 @@ func main() {
 	go func() {
 		log.Info("Service started on ", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil {
-			log.Info(err)
+			log.Info(err.Error())
 		}
 	}()
 

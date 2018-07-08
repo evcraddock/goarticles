@@ -2,3 +2,5 @@
 **/debug.test
 .idea
 env.list
+gcp.json
+config.yml
