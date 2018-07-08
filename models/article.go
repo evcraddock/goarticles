@@ -15,6 +15,7 @@ type Article struct {
 	Author      string        `json:"author"`
 	URL         string        `json:"url"`
 	Content     string        `json:"content"`
+	Banner      string        `json:"banner"`
 	DataSource  string        `json:"dataSource"`
 	PublishDate time.Time     `json:"publishDate"`
 	Categories  []string      `json:"categories"`
@@ -45,6 +46,8 @@ func (article *Article) UnmarshalJSON(j []byte) error {
 			article.URL = v.(string)
 		case "content":
 			article.Content = v.(string)
+		case "banner":
+			article.Banner = v.(string)
 		case "datasource":
 			article.DataSource = v.(string)
 		case "publishdate":

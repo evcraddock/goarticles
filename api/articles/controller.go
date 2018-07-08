@@ -78,18 +78,18 @@ func (c *ArticleController) Add(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
-		log.Fatalln("Error adding article", err)
+		log.Fatal("Error adding article", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := r.Body.Close(); err != nil {
-		log.Fatalln("Error adding article", err)
+		log.Fatal("Error adding article", err)
 	}
 
 	if err := json.Unmarshal(body, &article); err != nil {
 		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Fatalln("Error unmarshalling article data", err)
+			log.Fatal("Error unmarshalling article data", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
