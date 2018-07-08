@@ -28,7 +28,7 @@ func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
 
-	configFile := flag.String("configfile", "config.yml", "yaml configuration file (optional)")
+	configFile := flag.String("configfile", "", "yaml configuration file (optional)")
 	flag.Parse()
 
 	var err error
