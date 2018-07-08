@@ -15,6 +15,7 @@ type Configuration struct {
 	Server         ServerConfiguration         `yaml:"server"`
 	Database       DatabaseConfiguration       `yaml:"database"`
 	Authentication AuthenticationConfiguration `yaml:"authentication"`
+	Storage        StorageConfiguration        `yaml:"storage"`
 }
 
 //ServerConfiguration server config data
@@ -35,6 +36,12 @@ type DatabaseConfiguration struct {
 type AuthenticationConfiguration struct {
 	Domain   string `yaml:"domain"`
 	Audience string `yaml:"audience"`
+}
+
+//StorageConfiguration storage config data
+type StorageConfiguration struct {
+	Project string `yaml:"projectid"`
+	Bucket  string `yaml:"bucketname"`
 }
 
 //LoadConfig from file
@@ -80,6 +87,10 @@ func LoadEnvironmentVariables() (*Configuration, error) {
 		AuthenticationConfiguration{
 			Domain:   os.Getenv("GOA_AUTH_DOMAIN"),
 			Audience: os.Getenv("GOA_AUTH_AUDIENCE"),
+		},
+		StorageConfiguration{
+			Project: os.Getenv("GOA_GCP_PROJECTID"),
+			Bucket:  os.Getenv("GOA_GCP_BUCKETNAME"),
 		},
 	}, nil
 }

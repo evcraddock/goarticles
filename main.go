@@ -17,6 +17,7 @@ import (
 
 	"github.com/evcraddock/goarticles/api/articles"
 	"github.com/evcraddock/goarticles/api/health"
+	"github.com/evcraddock/goarticles/api/images"
 	"github.com/evcraddock/goarticles/models"
 	"github.com/evcraddock/goarticles/services"
 )
@@ -90,8 +91,6 @@ func main() {
 func setupRoutes(r *mux.Router, config *models.Configuration) {
 	auth := services.NewAuthorization(config)
 
-	articleController := articles.CreateArticleController(*config)
-
 	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "OPTIONS")
@@ -100,11 +99,11 @@ func setupRoutes(r *mux.Router, config *models.Configuration) {
 		return
 	})
 
-	r.HandleFunc("/api/articles", auth.Authorize(articleController.GetAll)).Methods("GET")
-	r.HandleFunc("/api/articles/{id}", auth.Authorize(articleController.GetByID)).Methods("GET")
-	r.HandleFunc("/api/articles", auth.Authorize(articleController.Add)).Methods("POST")
-	r.HandleFunc("/api/articles/{id}", auth.Authorize(articleController.Update)).Methods("PUT")
-	r.HandleFunc("/api/articles/{id}", auth.Authorize(articleController.Delete)).Methods("DELETE")
+	articleController := articles.CreateArticleController(*config)
+	articles.CreateRoutes(r, articleController, auth)
+
+	imagesController := images.CreateImageController(*config)
+	images.CreateRoutes(r, imagesController, auth)
 
 	health.CreateRoutes(r)
 }

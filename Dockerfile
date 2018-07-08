@@ -8,5 +8,6 @@ RUN  apk update && \
      apk add ca-certificates
 WORKDIR /app
 COPY --from=build-env /go/src/github.com/evcraddock/goarticles /app/
+COPY ./gcp.json /app/gcp.json
 ENTRYPOINT ./goarticles
 EXPOSE 8080
