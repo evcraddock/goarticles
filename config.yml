@@ -11,3 +11,7 @@ database:
 authentication:
   domain:     "erikvan.auth0.com"
   audience:   "https://api.erikvancraddock.com"
+
+storage:
+  projectid: "erikvancraddock"
+  bucketname: "dev-articles"

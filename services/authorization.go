@@ -16,7 +16,7 @@ import (
 type Authorization struct {
 	domain     string
 	audience   string
-	Middleware *jwtmiddleware.JWTMiddleware
+	middleware *jwtmiddleware.JWTMiddleware
 }
 
 //Jwks json web key collection
@@ -41,7 +41,7 @@ func NewAuthorization(config *models.Configuration) Authorization {
 		audience: config.Authentication.Audience,
 	}
 
-	auth.Middleware = jwtmiddleware.New(jwtmiddleware.Options{
+	auth.middleware = jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: auth.validateToken,
 		SigningMethod:       jwt.SigningMethodRS256,
 	})
@@ -49,10 +49,10 @@ func NewAuthorization(config *models.Configuration) Authorization {
 	return auth
 }
 
+//Authorize authorization wrapper
 func (auth *Authorization) Authorize(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		auth.Middleware.HandlerWithNext(w, r, next)
-		//auth.Middleware.CheckJWT()
+		auth.middleware.HandlerWithNext(w, r, next)
 	}
 }
 
