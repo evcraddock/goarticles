@@ -10,7 +10,7 @@ import (
 
 //Article model
 type Article struct {
-	ID          bson.ObjectId `bson:"_id"`
+	ID          bson.ObjectId `bson:"_id" json:"id"`
 	Title       string        `json:"title"`
 	Author      string        `json:"author"`
 	URL         string        `json:"url"`
