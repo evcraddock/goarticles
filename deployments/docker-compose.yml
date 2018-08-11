@@ -1,14 +1,14 @@
 version: '2'
 services:
-  web:
-    container_name: GoArticlesAPI
-    hostname: goarticles
+  api:
+    container_name: goarticles_api
+    hostname: goarticles-api
     build:
-      context: ./
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: ../build/package/Dockerfile
     image: evcraddock/goarticles:lastest
     env_file:
-      - env.list
+      - ../env.list
     ports:
       - '8080:8080'
     depends_on:
@@ -16,7 +16,7 @@ services:
     networks:
       - all
   mongo:
-    container_name: GoArticlesDB
+    container_name: goarticles_db
     hostname: goarticlesdb
     command: mongod  --bind_ip_all
     image: mongo:latest

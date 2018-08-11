@@ -1,30 +1,39 @@
-package images
+package api
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"github.com/evcraddock/goarticles/models"
-	"github.com/evcraddock/goarticles/services"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/evcraddock/goarticles"
+	"github.com/evcraddock/goarticles/repo"
 )
 
 const maxMemory = 1 * 1024 * 1024
 
 //ImageController model
 type ImageController struct {
-	storage services.Storage
+	storage repo.StorageRepository
 }
 
 //CreateImageController creates controller and sets routes
-func CreateImageController(config models.Configuration) ImageController {
+func CreateImageController(projectname, bucketname string) ImageController {
 
-	storage := services.CreateNewStorage(config)
+	storage := repo.CreateNewStorage(projectname, bucketname)
 	controller := ImageController{storage: storage}
 
 	return controller
+}
+
+//GetImageRoutes returns a list of images routes
+func (c *ImageController) GetImageRoutes() []Route {
+	return []Route{
+		{"GET", "/api/articles/{id}/images/{filename}", false, c.GetByFilename},
+		{"POST", "/api/articles/{id}/images", true, c.Add},
+		{"DELETE", "/api/articles/{id}/images/{filename}", true, c.DeleteByFilename},
+	}
 }
 
 //Add adds new image
@@ -43,13 +52,13 @@ func (c *ImageController) Add(w http.ResponseWriter, r *http.Request) {
 		for _, fileHeader := range fileHeaders {
 			file, _ := fileHeader.Open()
 
-			image := models.ArticleImage{
+			image := goarticles.ArticleImage{
 				ArticleID: articleID,
 				FileName:  fileHeader.Filename,
 				File:      file,
 			}
 
-			if err := c.storage.AddImage(context.Background(), image); err != nil {
+			if err := c.storage.AddImage(context.Background(), image.GetPath(), image.File); err != nil {
 				log.Error(err.Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -69,13 +78,13 @@ func (c *ImageController) GetByFilename(w http.ResponseWriter, r *http.Request) 
 	articleID := vars["id"]
 	filename := vars["filename"]
 
-	image := models.ArticleImage{
+	image := goarticles.ArticleImage{
 		ArticleID: articleID,
 		FileName:  filename,
 		File:      nil,
 	}
 
-	imagefile, err := c.storage.GetImage(context.Background(), image)
+	imagefile, err := c.storage.GetImage(context.Background(), image.GetPath())
 	if err != nil {
 		log.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -92,13 +101,13 @@ func (c *ImageController) DeleteByFilename(w http.ResponseWriter, r *http.Reques
 	articleID := vars["id"]
 	filename := vars["filename"]
 
-	image := models.ArticleImage{
+	image := goarticles.ArticleImage{
 		ArticleID: articleID,
 		FileName:  filename,
 		File:      nil,
 	}
 
-	if err := c.storage.DeleteImage(context.Background(), image); err != nil {
+	if err := c.storage.DeleteImage(context.Background(), image.GetPath()); err != nil {
 		log.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

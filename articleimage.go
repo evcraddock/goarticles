@@ -1,4 +1,4 @@
-package models
+package goarticles
 
 import "mime/multipart"
 
