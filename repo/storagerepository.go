@@ -1,27 +1,24 @@
-package services
+package repo
 
 import (
 	"context"
-
-	log "github.com/sirupsen/logrus"
-
 	"io"
-
 	"io/ioutil"
+	"mime/multipart"
 
 	"cloud.google.com/go/storage"
-	"github.com/evcraddock/goarticles/models"
+	log "github.com/sirupsen/logrus"
 )
 
-//Storage represents a google cloud storage account
-type Storage struct {
+//StorageRepository represents a google cloud storage account
+type StorageRepository struct {
 	client     *storage.Client
 	projectID  string
 	bucketName string
 }
 
-//CreateNewStorage creates Storage object
-func CreateNewStorage(config models.Configuration) Storage {
+//CreateNewStorage creates StorageRepository object
+func CreateNewStorage(projectname, bucketname string) StorageRepository {
 	ctx := context.Background()
 	storageClient, err := storage.NewClient(ctx)
 
@@ -29,10 +26,10 @@ func CreateNewStorage(config models.Configuration) Storage {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
-	store := Storage{
+	store := StorageRepository{
 		client:     storageClient,
-		projectID:  config.Storage.Project,
-		bucketName: config.Storage.Bucket,
+		projectID:  projectname,
+		bucketName: bucketname,
 	}
 
 	store.createBucket(ctx, store.bucketName)
@@ -41,7 +38,7 @@ func CreateNewStorage(config models.Configuration) Storage {
 }
 
 // Creates the new bucket.
-func (store *Storage) createBucket(ctx context.Context, bucketName string) *storage.BucketHandle {
+func (store *StorageRepository) createBucket(ctx context.Context, bucketName string) *storage.BucketHandle {
 
 	bucket := store.client.Bucket(bucketName)
 
@@ -53,13 +50,13 @@ func (store *Storage) createBucket(ctx context.Context, bucketName string) *stor
 }
 
 //AddImage adds image to bucket for an article
-func (store *Storage) AddImage(ctx context.Context, image models.ArticleImage) error {
+func (store *StorageRepository) AddImage(ctx context.Context, image string, file multipart.File) error {
 	bucket := store.client.Bucket(store.bucketName)
-	imgfile := bucket.Object(image.GetPath())
+	imgfile := bucket.Object(image)
 
 	ww := imgfile.NewWriter(ctx)
 
-	if _, err := io.Copy(ww, image.File); err != nil {
+	if _, err := io.Copy(ww, file); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -73,9 +70,9 @@ func (store *Storage) AddImage(ctx context.Context, image models.ArticleImage) e
 }
 
 //GetImage get image from storage and return as byte array
-func (store *Storage) GetImage(ctx context.Context, image models.ArticleImage) ([]byte, error) {
+func (store *StorageRepository) GetImage(ctx context.Context, image string) ([]byte, error) {
 	bucket := store.client.Bucket(store.bucketName)
-	imgreader, err := bucket.Object(image.GetPath()).NewReader(ctx)
+	imgreader, err := bucket.Object(image).NewReader(ctx)
 
 	if err != nil {
 		return nil, err
@@ -92,9 +89,9 @@ func (store *Storage) GetImage(ctx context.Context, image models.ArticleImage) (
 }
 
 //DeleteImage delete requested image
-func (store *Storage) DeleteImage(ctx context.Context, image models.ArticleImage) error {
+func (store *StorageRepository) DeleteImage(ctx context.Context, image string) error {
 	bucket := store.client.Bucket(store.bucketName)
-	img := bucket.Object(image.GetPath())
+	img := bucket.Object(image)
 	if err := img.Delete(ctx); err != nil {
 		return err
 	}

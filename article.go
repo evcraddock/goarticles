@@ -1,4 +1,4 @@
-package models
+package goarticles
 
 import (
 	"encoding/json"

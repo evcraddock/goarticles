@@ -9,7 +9,6 @@ import (
 
 	"github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/evcraddock/goarticles/models"
 )
 
 //Authorization values for validating token
@@ -35,10 +34,10 @@ type JSONWebKeys struct {
 }
 
 //NewAuthorization create new authorization
-func NewAuthorization(config *models.Configuration) Authorization {
+func NewAuthorization(domain, audience string) Authorization {
 	auth := Authorization{
-		domain:   config.Authentication.Domain,
-		audience: config.Authentication.Audience,
+		domain:   domain,
+		audience: audience,
 	}
 
 	auth.middleware = jwtmiddleware.New(jwtmiddleware.Options{

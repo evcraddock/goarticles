@@ -1,4 +1,4 @@
-package articles
+package repo
 
 import (
 	"gopkg.in/mgo.v2"
@@ -8,25 +8,25 @@ import (
 
 	"fmt"
 
-	"github.com/evcraddock/goarticles/models"
+	"github.com/evcraddock/goarticles"
 )
 
-//Repository model
-type Repository struct {
+//ArticleRepository model
+type ArticleRepository struct {
 	Server       string
 	DatabaseName string
 }
 
 //CreateArticleRepository creates a new repository
-func CreateArticleRepository(server, databaseName string) *Repository {
-	return &Repository{
+func CreateArticleRepository(server, databaseName string) *ArticleRepository {
+	return &ArticleRepository{
 		Server:       server,
 		DatabaseName: databaseName,
 	}
 }
 
 //GetArticles returns queried articles from database
-func (r *Repository) GetArticles(query map[string]interface{}) models.Articles {
+func (r *ArticleRepository) GetArticles(query map[string]interface{}) goarticles.Articles {
 
 	session, err := mgo.Dial(r.Server)
 	if err != nil {
@@ -36,7 +36,7 @@ func (r *Repository) GetArticles(query map[string]interface{}) models.Articles {
 	defer session.Close()
 
 	c := session.DB(r.DatabaseName).C("articles")
-	results := models.Articles{}
+	results := goarticles.Articles{}
 	if err := c.Find(query).All(&results); err != nil {
 		log.Warn("Failed to write results:", err)
 	}
@@ -47,7 +47,7 @@ func (r *Repository) GetArticles(query map[string]interface{}) models.Articles {
 }
 
 //GetArticle returns article by Id
-func (r *Repository) GetArticle(id string) (*models.Article, error) {
+func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
 	session, err := mgo.Dial(r.Server)
 
 	if err != nil {
@@ -59,7 +59,7 @@ func (r *Repository) GetArticle(id string) (*models.Article, error) {
 
 	c := session.DB(r.DatabaseName).C("articles")
 
-	result := models.Article{}
+	result := goarticles.Article{}
 	if err := c.FindId(bson.ObjectIdHex(id)).One(&result); err != nil {
 		log.Warn("Failed to write results:", err)
 		return nil, err
@@ -71,7 +71,7 @@ func (r *Repository) GetArticle(id string) (*models.Article, error) {
 }
 
 //AddArticle add article to database
-func (r *Repository) AddArticle(article models.Article) (*models.Article, error) {
+func (r *ArticleRepository) AddArticle(article goarticles.Article) (*goarticles.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()
 
@@ -88,7 +88,7 @@ func (r *Repository) AddArticle(article models.Article) (*models.Article, error)
 }
 
 //UpdateArticle updates article
-func (r Repository) UpdateArticle(article models.Article) (*models.Article, error) {
+func (r ArticleRepository) UpdateArticle(article goarticles.Article) (*goarticles.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()
 	session.DB(r.DatabaseName).C("articles").UpdateId(article.ID, article)
@@ -103,7 +103,7 @@ func (r Repository) UpdateArticle(article models.Article) (*models.Article, erro
 }
 
 //DeleteArticle deletes article
-func (r Repository) DeleteArticle(id string) error {
+func (r ArticleRepository) DeleteArticle(id string) error {
 	session, err := mgo.Dial(r.Server)
 	defer session.Close()
 

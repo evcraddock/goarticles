@@ -1,4 +1,4 @@
-package models
+package configs
 
 import (
 	"os"
@@ -44,8 +44,18 @@ type StorageConfiguration struct {
 	Bucket  string `yaml:"bucketname"`
 }
 
+func LoadConfig(configFile string) (*Configuration, error) {
+	if configFile != "" {
+		log.Info("Loading configuration from config file")
+		return LoadConfigFile(configFile)
+	} else {
+		log.Info("Loading configuration from environment variables")
+		return LoadEnvironmentVariables()
+	}
+}
+
 //LoadConfig from file
-func LoadConfig(filename string) (*Configuration, error) {
+func LoadConfigFile(filename string) (*Configuration, error) {
 
 	b, err := ioutil.ReadFile(filename)
 

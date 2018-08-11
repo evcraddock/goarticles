@@ -1,4 +1,4 @@
-package articles
+package api
 
 import (
 	"encoding/json"
@@ -12,22 +12,34 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/evcraddock/goarticles/models"
+	"github.com/evcraddock/goarticles"
+	"github.com/evcraddock/goarticles/repo"
 	"gopkg.in/mgo.v2/bson"
 )
 
 //ArticleController model
 type ArticleController struct {
-	repository Repository
+	repository repo.ArticleRepository
 }
 
 //CreateArticleController creates controller and sets routes
-func CreateArticleController(config models.Configuration) ArticleController {
-	dbserver := fmt.Sprintf("%v:%v", config.Database.Address, config.Database.Port)
-	repository := CreateArticleRepository(dbserver, config.Database.DatabaseName)
+func CreateArticleController(dbaddress, dbport, dbname string) ArticleController {
+	dbserver := fmt.Sprintf("%v:%v", dbaddress, dbport)
+	repository := repo.CreateArticleRepository(dbserver, dbname)
 	controller := ArticleController{repository: *repository}
 
 	return controller
+}
+
+//GetArticleRoutes return list of routes for articles
+func (c *ArticleController) GetArticleRoutes() []Route {
+	return []Route{
+		{"GET", "/api/articles", true, c.GetAll},
+		{"GET", "/api/articles/{id}", true, c.GetByID},
+		{"POST", "/api/articles", true, c.Add},
+		{"PUT", "/api/articles/{id}", true, c.Update},
+		{"DELETE", "/api/articles/{id}", true, c.Delete},
+	}
 }
 
 //GetByID returns article by article Id
@@ -74,7 +86,7 @@ func (c *ArticleController) GetAll(w http.ResponseWriter, r *http.Request) {
 
 //Add adds new article
 func (c *ArticleController) Add(w http.ResponseWriter, r *http.Request) {
-	var article models.Article
+	var article goarticles.Article
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -115,7 +127,7 @@ func (c *ArticleController) Update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	var article models.Article
+	var article goarticles.Article
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 
 	if err != nil {
