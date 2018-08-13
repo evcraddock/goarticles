@@ -28,6 +28,12 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/ericaro/frontmatter"
+  packages = ["."]
+  revision = "9fedef9406e420da012d078cd83645bbac08f291"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -250,6 +256,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2b1345617693d3962f9e5fab346eb3e7d1d4329371eb0e098fd73547323deae"
+  inputs-digest = "e88e7d27d51e0e7f7861dbe52a5592a125970d968c86efe641dc0e697141a7dd"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -6,5 +6,8 @@ import (
 
 func main() {
 
-	cli.CreateOrUpdateArticle()
+	//TODO: get filename from flag
+	var filename string
+
+	cli.CreateOrUpdateArticle(filename)
 }
