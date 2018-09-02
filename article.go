@@ -25,6 +25,7 @@ type Article struct {
 //Articles collection of articles
 type Articles []Article
 
+//MarshalJSON custom MarshalJSON for articles
 func (article *Article) MarshalJSON() ([]byte, error) {
 	id := ""
 	if article.ID.Valid() {
@@ -48,6 +49,7 @@ func (article *Article) MarshalJSON() ([]byte, error) {
 	})
 }
 
+//UnmarshalJSON custom UnmarshalJSON for articles
 func (article *Article) UnmarshalJSON(data []byte) error {
 	id := ""
 	if article.ID.Valid() {
@@ -84,58 +86,6 @@ func (article *Article) UnmarshalJSON(data []byte) error {
 		}
 
 		article.PublishDate = t
-	}
-
-	return nil
-}
-
-//UnmarshalJSON custom Unmarshal function for article model
-func (article *Article) UnmarshalJSON1(j []byte) error {
-	var articleMap map[string]interface{}
-
-	err := json.Unmarshal(j, &articleMap)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range articleMap {
-		switch strings.ToLower(k) {
-		case "id":
-			article.ID = bson.ObjectIdHex(v.(string))
-		case "title":
-			article.Title = v.(string)
-		case "author":
-			article.Author = v.(string)
-		case "url":
-			article.URL = v.(string)
-		case "content":
-			article.Content = v.(string)
-		case "banner":
-			article.Banner = v.(string)
-		case "datasource":
-			article.DataSource = v.(string)
-		case "publishdate":
-			t, err := time.Parse("2006-01-02", v.(string))
-			if err != nil {
-				return err
-			}
-
-			article.PublishDate = t
-		case "categories":
-			cats := make([]string, 0)
-			for _, v := range v.([]interface{}) {
-				cats = append(cats, v.(string))
-			}
-
-			article.Categories = cats
-		case "tags":
-			tags := make([]string, 0)
-			for _, v := range v.([]interface{}) {
-				tags = append(tags, v.(string))
-			}
-
-			article.Tags = tags
-		}
 	}
 
 	return nil

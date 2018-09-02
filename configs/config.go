@@ -44,17 +44,7 @@ type StorageConfiguration struct {
 	Bucket  string `yaml:"bucketname"`
 }
 
-func LoadConfig(configFile string) (*Configuration, error) {
-	if configFile != "" {
-		log.Info("Loading configuration from config file")
-		return LoadConfigFile(configFile)
-	} else {
-		log.Info("Loading configuration from environment variables")
-		return LoadEnvironmentVariables()
-	}
-}
-
-//LoadConfig from file
+//LoadConfigFile load from file
 func LoadConfigFile(filename string) (*Configuration, error) {
 
 	b, err := ioutil.ReadFile(filename)
@@ -76,7 +66,6 @@ func LoadConfigFile(filename string) (*Configuration, error) {
 }
 
 //LoadEnvironmentVariables load from env variables
-//TODO: return error if env variables are empty
 func LoadEnvironmentVariables() (*Configuration, error) {
 	timeout, err := time.ParseDuration(os.Getenv("GOA_DB_TIMEOUT"))
 	if err != nil {

@@ -108,7 +108,6 @@ func (s *ImportArticleService) getInputLocation(inputLocation string) (string, b
 	return inputLocation, ok
 }
 
-//LoadImportArticle load article from yaml file
 func (s *ImportArticleService) loadImportArticle(filename string) (*ImportArticle, error) {
 	importFile, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -143,12 +142,6 @@ func (s *ImportArticleService) saveArticle(filename string) {
 	if _, err := s.createArticle(*importArticle); err != nil {
 		log.Error(err.Error())
 	}
-
-	//if testarticle, err := s.loadArticle(importArticle.ID); err != nil {
-	//	log.Error(err.Error())
-	//} else {
-	//	log.Infof("teastarticle: %v", testarticle)
-	//}
 }
 
 func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
