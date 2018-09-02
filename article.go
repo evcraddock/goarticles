@@ -25,8 +25,72 @@ type Article struct {
 //Articles collection of articles
 type Articles []Article
 
+func (article *Article) MarshalJSON() ([]byte, error) {
+	id := ""
+	if article.ID.Valid() {
+		id = article.ID.Hex()
+	}
+
+	date := ""
+	if !article.PublishDate.IsZero() {
+		date = article.PublishDate.Format("2006-01-02")
+	}
+
+	type Alias Article
+	return json.Marshal(&struct {
+		ID          string `json:"id,omitempty"`
+		PublishDate string `json:"publishDate,omitempty"`
+		*Alias
+	}{
+		ID:          id,
+		PublishDate: date,
+		Alias:       (*Alias)(article),
+	})
+}
+
+func (article *Article) UnmarshalJSON(data []byte) error {
+	id := ""
+	if article.ID.Valid() {
+		id = article.ID.Hex()
+	}
+
+	date := ""
+	if !article.PublishDate.IsZero() {
+		date = article.PublishDate.Format("2006-01-02")
+	}
+
+	type Alias Article
+	aux := &struct {
+		ID          string `json:"id,omitempty"`
+		PublishDate string `json:"publishDate,omitempty"`
+		*Alias
+	}{
+		ID:          id,
+		PublishDate: date,
+		Alias:       (*Alias)(article),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	article.ID = bson.ObjectIdHex(aux.ID)
+
+	if aux.PublishDate != "" {
+		date := strings.Split(aux.PublishDate, "T")
+		t, err := time.Parse("2006-01-02", date[0])
+		if err != nil {
+			return err
+		}
+
+		article.PublishDate = t
+	}
+
+	return nil
+}
+
 //UnmarshalJSON custom Unmarshal function for article model
-func (article *Article) UnmarshalJSON(j []byte) error {
+func (article *Article) UnmarshalJSON1(j []byte) error {
 	var articleMap map[string]interface{}
 
 	err := json.Unmarshal(j, &articleMap)

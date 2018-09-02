@@ -71,6 +71,12 @@
   version = "v1.6.2"
 
 [[projects]]
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
@@ -256,6 +262,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e88e7d27d51e0e7f7861dbe52a5592a125970d968c86efe641dc0e697141a7dd"
+  inputs-digest = "eea6ff5a5f9a57816b4cf06cb650e05b7500e24dfff394e6631cffcc00cf852a"
   solver-name = "gps-cdcl"
   solver-version = 1
