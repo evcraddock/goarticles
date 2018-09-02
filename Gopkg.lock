@@ -28,6 +28,12 @@
   version = "v3.2.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/ericaro/frontmatter"
+  packages = ["."]
+  revision = "9fedef9406e420da012d078cd83645bbac08f291"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -63,6 +69,12 @@
   packages = ["."]
   revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
   version = "v1.6.2"
+
+[[projects]]
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -250,6 +262,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2b1345617693d3962f9e5fab346eb3e7d1d4329371eb0e098fd73547323deae"
+  inputs-digest = "eea6ff5a5f9a57816b4cf06cb650e05b7500e24dfff394e6631cffcc00cf852a"
   solver-name = "gps-cdcl"
   solver-version = 1
