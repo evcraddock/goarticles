@@ -13,10 +13,8 @@ func main() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
 
-	testfilename := "/home/erik/code/src/github.com/evcraddock/erikvancraddock-articles/how-to-use-goals/how-to-use-goals.md"
-
 	configFile := flag.String("configfile", "", "yaml configuration file (optional)")
-	filesToProcess := flag.String("files", testfilename, "files or folders to process")
+	filesToProcess := flag.String("files", "", "files or folders to process")
 	flag.Parse()
 
 	log.Info("Loading configuration from environment variables")
