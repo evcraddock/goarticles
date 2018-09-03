@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 
 	"cloud.google.com/go/storage"
+	"github.com/evcraddock/goarticles/services"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,18 +19,18 @@ type StorageRepository struct {
 }
 
 //CreateNewStorage creates StorageRepository object
-func CreateNewStorage(projectname, bucketname string) StorageRepository {
+func CreateNewStorage(projectName, bucketName string) StorageRepository {
 	ctx := context.Background()
 	storageClient, err := storage.NewClient(ctx)
 
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+		panic("Failed to create client: " + err.Error())
 	}
 
 	store := StorageRepository{
 		client:     storageClient,
-		projectID:  projectname,
-		bucketName: bucketname,
+		projectID:  projectName,
+		bucketName: bucketName,
 	}
 
 	store.createBucket(ctx, store.bucketName)
@@ -58,12 +59,12 @@ func (store *StorageRepository) AddImage(ctx context.Context, image string, file
 
 	if _, err := io.Copy(ww, file); err != nil {
 		log.Error(err)
-		return err
+		return services.NewError(err, "unable to write image to bucket", "StorageError", false)
 	}
 
 	if err := ww.Close(); err != nil {
 		log.Error(err)
-		return err
+		return services.NewError(err, "unable to close writer", "StorageError", false)
 	}
 
 	return nil
@@ -75,14 +76,14 @@ func (store *StorageRepository) GetImage(ctx context.Context, image string) ([]b
 	imgreader, err := bucket.Object(image).NewReader(ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, services.NewError(err, "could not find image", "NotFound", true)
 	}
 
 	defer imgreader.Close()
 
 	imgdata, err := ioutil.ReadAll(imgreader)
 	if err != nil {
-		return nil, err
+		return nil, services.NewError(err, "could not open file", "StorageError", false)
 	}
 
 	return imgdata, nil
@@ -93,7 +94,7 @@ func (store *StorageRepository) DeleteImage(ctx context.Context, image string) e
 	bucket := store.client.Bucket(store.bucketName)
 	img := bucket.Object(image)
 	if err := img.Delete(ctx); err != nil {
-		return err
+		return services.NewError(err, "unable to delete image", "StorageError", false)
 	}
 
 	return nil

@@ -4,11 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/evcraddock/goarticles"
 	"github.com/evcraddock/goarticles/repo"
+	"github.com/evcraddock/goarticles/services"
+	"github.com/gorilla/mux"
 )
 
 const maxMemory = 1 * 1024 * 1024
@@ -37,15 +36,12 @@ func (c *ImageController) GetImageRoutes() []Route {
 }
 
 //Add adds new image
-func (c *ImageController) Add(w http.ResponseWriter, r *http.Request) {
-	///TODO: check that article exists
+func (c *ImageController) Add(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	articleID := vars["id"]
 
 	if err := r.ParseMultipartForm(maxMemory); err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return services.NewError(err, "invalid multipart format", "FormatError", false)
 	}
 
 	for _, fileHeaders := range r.MultipartForm.File {
@@ -59,21 +55,19 @@ func (c *ImageController) Add(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if err := c.storage.AddImage(context.Background(), image.GetPath(), image.File); err != nil {
-				log.Error(err.Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
+				return err
 			}
 
 		}
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusAccepted)
 
-	return
+	return nil
 }
 
 //GetByFilename get image by filename
-func (c *ImageController) GetByFilename(w http.ResponseWriter, r *http.Request) {
+func (c *ImageController) GetByFilename(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	articleID := vars["id"]
 	filename := vars["filename"]
@@ -86,17 +80,18 @@ func (c *ImageController) GetByFilename(w http.ResponseWriter, r *http.Request) 
 
 	imagefile, err := c.storage.GetImage(context.Background(), image.GetPath())
 	if err != nil {
-		log.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
 	}
 
 	w.Header().Set("Content-Disposition", "attachment; filename="+image.FileName)
 	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
 	w.Write(imagefile)
+
+	return nil
 }
 
 //DeleteByFilename delete image by filename
-func (c *ImageController) DeleteByFilename(w http.ResponseWriter, r *http.Request) {
+func (c *ImageController) DeleteByFilename(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	articleID := vars["id"]
 	filename := vars["filename"]
@@ -108,9 +103,10 @@ func (c *ImageController) DeleteByFilename(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := c.storage.DeleteImage(context.Background(), image.GetPath()); err != nil {
-		log.Error(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
 	}
 
 	w.WriteHeader(http.StatusOK)
+
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/evcraddock/goarticles"
+	"github.com/evcraddock/goarticles/services"
 )
 
 //ArticleRepository model
@@ -26,46 +27,45 @@ func CreateArticleRepository(server, databaseName string) *ArticleRepository {
 }
 
 //GetArticles returns queried articles from database
-func (r *ArticleRepository) GetArticles(query map[string]interface{}) goarticles.Articles {
-
+func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*goarticles.Articles, error) {
 	session, err := mgo.Dial(r.Server)
-	if err != nil {
-		log.Warn("Failed to establish connection to database:", err)
+	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
+		return nil, err
 	}
 
 	defer session.Close()
 
 	c := session.DB(r.DatabaseName).C("articles")
 	results := goarticles.Articles{}
-	if err := c.Find(query).All(&results); err != nil {
-		log.Warn("Failed to write results:", err)
+	if err := services.NewError(
+		c.Find(query).All(&results),
+		"error retrieving data",
+		"DatabaseError",
+		false); err != nil {
+		return nil, err
 	}
 
-	log.Debug("GetArticles returned ", len(results), " articles")
-
-	return results
+	return &results, nil
 }
 
 //GetArticle returns article by Id
 func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
 	session, err := mgo.Dial(r.Server)
-
-	if err != nil {
-		log.Warn("Failed to establish connection to database:", err)
+	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
 		return nil, err
 	}
 
 	defer session.Close()
 
 	c := session.DB(r.DatabaseName).C("articles")
-
 	result := goarticles.Article{}
-	if err := c.FindId(bson.ObjectIdHex(id)).One(&result); err != nil {
-		log.Warn("Failed to write results:", err)
+	if err := services.NewError(c.FindId(
+		bson.ObjectIdHex(id)).One(&result),
+		"article doesn't exist",
+		"NotFound",
+		false); err != nil {
 		return nil, err
 	}
-
-	log.Debug("GetArticle returned ", result.ID)
 
 	return &result, nil
 }
@@ -73,12 +73,18 @@ func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
 //AddArticle add article to database
 func (r *ArticleRepository) AddArticle(article goarticles.Article) (*goarticles.Article, error) {
 	session, err := mgo.Dial(r.Server)
+	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
+		return nil, err
+	}
+
 	defer session.Close()
 
 	article.ID = bson.NewObjectId()
-	session.DB(r.DatabaseName).C("articles").Insert(article)
-	if err != nil {
-		log.Warn(err)
+	if err := services.NewError(
+		session.DB(r.DatabaseName).C("articles").Insert(article),
+		"failed to create article",
+		"DatabaseError",
+		false); err != nil {
 		return nil, err
 	}
 
@@ -88,12 +94,24 @@ func (r *ArticleRepository) AddArticle(article goarticles.Article) (*goarticles.
 }
 
 //UpdateArticle updates article
-func (r ArticleRepository) UpdateArticle(article goarticles.Article) (*goarticles.Article, error) {
+func (r *ArticleRepository) UpdateArticle(article goarticles.Article) (*goarticles.Article, error) {
 	session, err := mgo.Dial(r.Server)
+	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
+		return nil, err
+	}
+
 	defer session.Close()
-	session.DB(r.DatabaseName).C("articles").UpdateId(article.ID, article)
+	c := session.DB(r.DatabaseName).C("articles")
+	oid, err := r.articleExists(c, article.ID.Hex())
 	if err != nil {
-		log.Warn(err)
+		return nil, err
+	}
+
+	if err := services.NewError(
+		c.UpdateId(oid, article),
+		"failed to update article",
+		"DatabaseError",
+		false); err != nil {
 		return nil, err
 	}
 
@@ -103,21 +121,63 @@ func (r ArticleRepository) UpdateArticle(article goarticles.Article) (*goarticle
 }
 
 //DeleteArticle deletes article
-func (r ArticleRepository) DeleteArticle(id string) error {
+func (r *ArticleRepository) DeleteArticle(id string) error {
 	session, err := mgo.Dial(r.Server)
-	defer session.Close()
-
-	if !bson.IsObjectIdHex(id) {
-		return fmt.Errorf("article doesn't exist")
-	}
-
-	oid := bson.ObjectIdHex(id)
-	if err = session.DB(r.DatabaseName).C("articles").RemoveId(oid); err != nil {
-		log.Warn(err)
+	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
 		return err
 	}
 
-	log.Debug("Delete Article ID: ", id)
+	defer session.Close()
+	c := session.DB(r.DatabaseName).C("articles")
+	oid, err := r.articleExists(c, id)
+	if err != nil {
+		return err
+	}
+
+	if err = services.NewError(
+		c.RemoveId(oid),
+		"failed to delete article",
+		"DatabaseError",
+		false); err != nil {
+		return err
+	}
+
+	log.Debug("Delete Article ID: ", oid)
 
 	return nil
+}
+
+//ArticleExists check to see if artcle exists in database
+func (r *ArticleRepository) ArticleExists(id string) (bool, error) {
+	session, err := mgo.Dial(r.Server)
+	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
+		return false, err
+	}
+
+	defer session.Close()
+	c := session.DB(r.DatabaseName).C("articles")
+	if _, err := r.articleExists(c, id); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *ArticleRepository) articleExists(collection *mgo.Collection, id string) (*bson.ObjectId, error) {
+	if !bson.IsObjectIdHex(id) {
+		err := services.NewError(fmt.Errorf("invalid id"), "can not find record: invalid id", "DatabaseError", false)
+		return nil, err
+	}
+
+	oid := bson.ObjectIdHex(id)
+	count, err := collection.FindId(oid).Count()
+	if err != nil {
+		return nil, services.NewError(err, "could not find article", "DatabaseError", false)
+	}
+
+	if count < 1 {
+		return nil, services.NewError(fmt.Errorf("article does not exist"), "article does not exist", "NotFound", false)
+	}
+
+	return &oid, nil
 }
