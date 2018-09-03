@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -24,6 +26,38 @@ type Article struct {
 
 //Articles collection of articles
 type Articles []Article
+
+//ValidateRequiredFields check list of required fields
+func (article *Article) ValidateRequiredFields() []error {
+	errors := make([]error, 0)
+	requiredFields := []string{
+		"title",
+		"author",
+		"url",
+		"content",
+	}
+
+	var mapobj map[string]interface{}
+	obj, _ := json.Marshal(article)
+	json.Unmarshal(obj, &mapobj)
+
+	for _, v := range requiredFields {
+		if _, found := mapobj[v]; found {
+			if mapobj[v] != "" {
+				continue
+			}
+		}
+
+		err := fmt.Errorf("%v is required", v)
+		errors = append(errors, err)
+	}
+
+	if len(errors) == 0 {
+		return nil
+	}
+
+	return errors
+}
 
 //MarshalJSON custom MarshalJSON for articles
 func (article *Article) MarshalJSON() ([]byte, error) {
@@ -76,7 +110,9 @@ func (article *Article) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	article.ID = bson.ObjectIdHex(aux.ID)
+	if aux.ID != "" {
+		article.ID = bson.ObjectIdHex(aux.ID)
+	}
 
 	if aux.PublishDate != "" {
 		date := strings.Split(aux.PublishDate, "T")

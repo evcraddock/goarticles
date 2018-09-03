@@ -10,10 +10,12 @@ func GetHealthRoutes() []Route {
 }
 
 //HealthCheck returns statusok for GET requests
-func HealthCheck(w http.ResponseWriter, r *http.Request) {
+func HealthCheck(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "GET" {
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+
+	return nil
 }

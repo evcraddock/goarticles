@@ -7,6 +7,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"fmt"
+
 	"github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -43,16 +45,30 @@ func NewAuthorization(domain, audience string) Authorization {
 	auth.middleware = jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: auth.validateToken,
 		SigningMethod:       jwt.SigningMethodRS256,
+		ErrorHandler:        NotAuthorizedError,
 	})
 
 	return auth
 }
 
-//Authorize authorization wrapper
-func (auth *Authorization) Authorize(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		auth.middleware.HandlerWithNext(w, r, next)
-	}
+//Authorize wraps handler with authorization middleware
+func (auth *Authorization) Authorize(handler http.Handler) http.Handler {
+	return auth.middleware.Handler(handler)
+}
+
+//NotAuthorizedError authorization error handler
+func NotAuthorizedError(w http.ResponseWriter, r *http.Request, err string) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+	apiError := NewError(
+		fmt.Errorf("%v", err),
+		"unable to validate token",
+		"Authorization",
+		true)
+
+	errorData, _ := json.Marshal(apiError)
+	w.WriteHeader(apiError.Status())
+	w.Write(errorData)
 }
 
 func (auth *Authorization) validateToken(token *jwt.Token) (interface{}, error) {

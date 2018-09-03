@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"time"
 
+	"encoding/json"
+
 	"github.com/evcraddock/goarticles/configs"
 	"github.com/evcraddock/goarticles/services"
 )
@@ -21,7 +23,49 @@ type Route struct {
 	Method      string
 	Path        string
 	RequireAuth bool
-	HandlerFunc http.HandlerFunc
+	HandlerFunc RouteHandlerFunc
+}
+
+//RouteHandler custom route handler
+type RouteHandler struct {
+	HandlerFunc RouteHandlerFunc
+}
+
+//RouteHandlerFunc custom handlerfunc for routes
+type RouteHandlerFunc func(w http.ResponseWriter, r *http.Request) error
+
+//AddHandler adds function to RouteHandler
+func AddHandler(handlerFunc RouteHandlerFunc) RouteHandler {
+	return RouteHandler{
+		HandlerFunc: handlerFunc,
+	}
+}
+
+//ServeHTTP required for Handler interface
+func (h RouteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	err := h.HandlerFunc(w, r)
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		switch e := err.(type) {
+		case services.Error:
+			if e.ShouldDisplay() {
+				errorData, _ := json.Marshal(e)
+				w.WriteHeader(e.Status())
+				w.Write(errorData)
+				return
+			}
+
+			w.WriteHeader(e.Status())
+		default:
+
+			//TODO: return better error
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		return
+	}
 }
 
 //NewServer create a new http server
@@ -33,7 +77,7 @@ func NewServer(config *configs.Configuration) {
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      handleCORS(router),
+		Handler:      router,
 	}
 
 	go func() {
@@ -57,7 +101,7 @@ func NewServer(config *configs.Configuration) {
 }
 
 //NewRouter creates a new router
-func NewRouter(config *configs.Configuration) *mux.Router {
+func NewRouter(config *configs.Configuration) http.Handler {
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	auth := services.NewAuthorization(config.Authentication.Domain, config.Authentication.Audience)
@@ -67,21 +111,27 @@ func NewRouter(config *configs.Configuration) *mux.Router {
 	articleCtrl := CreateArticleController(config.Database.Address, config.Database.Port, config.Database.DatabaseName)
 	imageCtrl := CreateImageController(config.Storage.Project, config.Storage.Bucket)
 
+	//TODO: Add Not Found Hander
+	//TODO: Add method not allowed handler
+
 	routes = append(routes, articleCtrl.GetArticleRoutes()...)
 	routes = append(routes, imageCtrl.GetImageRoutes()...)
 	routes = append(routes, GetHealthRoutes()...)
 
 	for _, route := range routes {
-		handle := route.HandlerFunc
+		handler := AddHandler(route.HandlerFunc)
 
 		if route.RequireAuth {
-			handle = auth.Authorize(route.HandlerFunc)
+			handle := auth.Authorize(handler)
+			r.Handle(route.Path, handle).Methods(route.Method)
+
+			continue
 		}
 
-		r.HandleFunc(route.Path, handle).Methods(route.Method)
+		r.Handle(route.Path, handler).Methods(route.Method)
 	}
 
-	return r
+	return handleCORS(r)
 }
 
 func handleCORS(router *mux.Router) http.Handler {
