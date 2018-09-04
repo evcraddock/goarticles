@@ -17,14 +17,12 @@ func main() {
 	filesToProcess := flag.String("files", "", "files or folders to process")
 	flag.Parse()
 
-	log.Info("Loading configuration from environment variables")
-	config, err := configs.LoadCliConfigFromEnvVariables()
-	if err != nil {
-		config, err = configs.LoadCliConfig(*configFile)
-		if err != nil {
-			log.Error(err.Error())
-			panic(err)
-		}
+	var config *configs.ClientConfiguration
+	var err error
+
+	if config, err = configs.LoadCliConfig(*configFile); err != nil {
+		log.Error(err.Error())
+		return
 	}
 
 	log.SetLevel(log.InfoLevel)

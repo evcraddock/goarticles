@@ -1,11 +1,13 @@
 package configs
 
 import (
-	log "github.com/sirupsen/logrus"
-	//"gopkg.in/yaml.v2"
 	"io/ioutil"
 
+	log "github.com/sirupsen/logrus"
+
 	"os"
+
+	"fmt"
 
 	"gopkg.in/yaml.v2"
 )
@@ -57,14 +59,56 @@ func LoadCliConfigFromFile(filename string) (*ClientConfiguration, error) {
 
 //LoadCliConfigFromEnvVariables load configuration from env variables
 func LoadCliConfigFromEnvVariables() (*ClientConfiguration, error) {
-	return &ClientConfiguration{
-		URL: os.Getenv("CLI_API_URL"),
-		Auth: AuthConfig{
-			URL:          os.Getenv("CLI_AUTH_URL"),
-			GrantType:    os.Getenv("CLI_GRANT_TYPE"),
-			ClientID:     os.Getenv("CLI_CLIENT_ID"),
-			ClientSecret: os.Getenv("CLI_CLIENT_SECRET"),
-			Audience:     os.Getenv("CLI_AUTH_AUDIENCE"),
-		},
-	}, nil
+	authConfig := &AuthConfig{}
+	errors := make([]error, 0)
+
+	if url, exists := os.LookupEnv("CLI_AUTH_URL"); exists {
+		authConfig.URL = url
+	} else {
+		errors = append(errors, fmt.Errorf("env variable CLI_AUTH_URL does not exist"))
+	}
+
+	if grantType, exists := os.LookupEnv("CLI_GRANT_TYPE"); exists {
+		authConfig.GrantType = grantType
+	} else {
+		errors = append(errors, fmt.Errorf("env variable CLI_GRANT_TYPE does not exist"))
+	}
+
+	if clientId, exists := os.LookupEnv("CLI_CLIENT_ID"); exists {
+		authConfig.ClientID = clientId
+	} else {
+		errors = append(errors, fmt.Errorf("env variable CLI_CLIENT_IDdoes not exist"))
+	}
+
+	if clientSecret, exists := os.LookupEnv("CLI_CLIENT_SECRET"); exists {
+		authConfig.ClientSecret = clientSecret
+	} else {
+		errors = append(errors, fmt.Errorf("env variable CLI_CLIENT_SECRET does not exist"))
+	}
+
+	if audience, exists := os.LookupEnv("CLI_AUTH_AUDIENCE"); exists {
+		authConfig.Audience = audience
+	} else {
+		errors = append(errors, fmt.Errorf("env variable CLI_AUTH_AUDIENCE does not exist"))
+	}
+
+	cliConfig := &ClientConfiguration{
+		Auth: *authConfig,
+	}
+
+	if apiUrl, exists := os.LookupEnv("CLI_API_URL"); exists {
+		cliConfig.URL = apiUrl
+	} else {
+		errors = append(errors, fmt.Errorf("env variable CLI_API_URL does not exist"))
+	}
+
+	if len(errors) > 0 {
+		for _, v := range errors {
+			log.Error(v.(error).Error())
+		}
+
+		return nil, fmt.Errorf("could not load env variables")
+	}
+
+	return cliConfig, nil
 }
