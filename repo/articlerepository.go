@@ -57,6 +57,11 @@ func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
 
 	defer session.Close()
 
+	if !bson.IsObjectIdHex(id) {
+		err := services.NewError(fmt.Errorf("invalid id"), "can not find record: invalid id", "NotFound", false)
+		return nil, err
+	}
+
 	c := session.DB(r.DatabaseName).C("articles")
 	result := goarticles.Article{}
 	if err := services.NewError(c.FindId(
@@ -165,7 +170,7 @@ func (r *ArticleRepository) ArticleExists(id string) (bool, error) {
 
 func (r *ArticleRepository) articleExists(collection *mgo.Collection, id string) (*bson.ObjectId, error) {
 	if !bson.IsObjectIdHex(id) {
-		err := services.NewError(fmt.Errorf("invalid id"), "can not find record: invalid id", "DatabaseError", false)
+		err := services.NewError(fmt.Errorf("invalid id"), "can not find record: invalid id", "NotFound", false)
 		return nil, err
 	}
 

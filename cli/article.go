@@ -247,11 +247,6 @@ func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
 		return nil, err
 	}
 
-	//json.NewDecoder(res.Body).Decode(article)
-	//if err := json.NewDecoder(res.Body).Decode(article); err != nil {
-	//	return nil, err
-	//}
-
 	return s.copyFrom(article)
 }
 
@@ -298,8 +293,6 @@ func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goar
 	b, _ := json.Marshal(article)
 
 	client := &http.Client{}
-
-	//fmt.Printf("article: %v \n", string(b))
 
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
 	req.Header.Set("Authorization", "Bearer "+authToken)

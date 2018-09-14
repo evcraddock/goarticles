@@ -4,8 +4,8 @@ services:
     container_name: goarticles_api
     hostname: goarticles-api
     build:
-      context: ..
-      dockerfile: ../build/package/Dockerfile
+      context: ../
+      dockerfile: Dockerfile
     image: evcraddock/goarticles:lastest
     env_file:
       - ../env.list
