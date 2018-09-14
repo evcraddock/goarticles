@@ -3,6 +3,10 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"mime/multipart"
+	"net/textproto"
+	"os"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 
@@ -29,6 +33,7 @@ type ImportArticle struct {
 	Title       string   `yaml:"title"`
 	URL         string   `yaml:"url"`
 	Banner      string   `yaml:"banner"`
+	Images      []string `yaml:"images"`
 	PublishDate string   `yaml:"publishDate"`
 	Author      string   `yaml:"author"`
 	Categories  []string `yaml:"categories"`
@@ -129,19 +134,91 @@ func (s *ImportArticleService) saveArticle(filename string) {
 	}
 
 	if importArticle.ID != "" {
-		if err := s.updateArticle(*importArticle); err == nil {
-			return
+		if err := s.updateArticle(*importArticle); err != nil {
+			if err.Error() == "404" {
+				importArticle.ID = ""
+			}
 		}
 	}
 
-	//TODO: handle knowing if article doesn't exist better than this
-	if err != nil && err.Error() == "404" {
-		importArticle.ID = ""
+	savedArticleID := importArticle.ID
+
+	if savedArticleID == "" {
+		newArticle, err := s.createArticle(*importArticle)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+
+		savedArticleID = newArticle.ID.Hex()
 	}
 
-	if _, err := s.createArticle(*importArticle); err != nil {
-		log.Error(err.Error())
+	if len(importArticle.Images) > 0 {
+		fileDir := filepath.Dir(filename)
+		if err := s.saveImages(savedArticleID, fileDir, importArticle.Images); err != nil {
+			log.Error(err.Error())
+		}
 	}
+
+}
+
+func (s *ImportArticleService) saveImages(id string, directory string, images []string) error {
+	for _, filename := range images {
+		if err := s.saveImage(id, directory, filename); err != nil {
+			log.Error(err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (s *ImportArticleService) saveImage(id string, directory string, filename string) error {
+	url := s.URL + "/api/articles/" + id + "/images"
+	authToken := s.getAccessToken()
+
+	client := &http.Client{}
+	header := make(textproto.MIMEHeader)
+	header.Set("Content-Disposition", fmt.Sprintf(`form-data; name="image"; filename="%s"`, filename))
+
+	file, err := os.Open(directory + "/" + filename)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	buffer := &bytes.Buffer{}
+	writer := multipart.NewWriter(buffer)
+
+	fileWriter, err := writer.CreatePart(header)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(fileWriter, file)
+	if err != nil {
+		return err
+	}
+
+	writer.Close()
+
+	req, _ := http.NewRequest("POST", url, buffer)
+	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode == 202 {
+		fmt.Printf("successfully added article image: %v \n", filename)
+		return nil
+	}
+
+	return fmt.Errorf("failed to save image with error: %v", res.Status)
 }
 
 func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
@@ -222,7 +299,7 @@ func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goar
 
 	client := &http.Client{}
 
-	fmt.Printf("article: %v \n", string(b))
+	//fmt.Printf("article: %v \n", string(b))
 
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
 	req.Header.Set("Authorization", "Bearer "+authToken)
