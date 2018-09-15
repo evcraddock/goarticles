@@ -139,12 +139,8 @@ func (r *ArticleRepository) DeleteArticle(id string) error {
 		return err
 	}
 
-	if err = services.NewError(
-		c.RemoveId(oid),
-		"failed to delete article",
-		"DatabaseError",
-		false); err != nil {
-		return err
+	if err = c.RemoveId(oid); err != nil {
+		return services.NewError(err, "failed to delete article", "DatabaseError", false)
 	}
 
 	log.Debug("Delete Article ID: ", oid)

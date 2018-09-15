@@ -306,7 +306,13 @@ func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goar
 	defer res.Body.Close()
 
 	if res.StatusCode == 201 {
-		fmt.Printf("successfully added article: %v \n", importArticle.Title)
+
+		body, _ := ioutil.ReadAll(io.LimitReader(res.Body, 1048576))
+		if err := json.Unmarshal(body, &article); err != nil {
+			return nil, err
+		}
+
+		fmt.Printf("successfully added article: %v \n", article.Title)
 		return article, nil
 	}
 
