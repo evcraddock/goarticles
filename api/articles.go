@@ -161,13 +161,15 @@ func (c *ArticleController) Delete(w http.ResponseWriter, r *http.Request) error
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	if err := c.repository.DeleteArticle(id); err != nil {
+	err := c.repository.DeleteArticle(id)
+	if err != nil {
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(http.StatusOK)
+
 	return nil
 }
 
