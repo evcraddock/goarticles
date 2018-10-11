@@ -7,6 +7,25 @@ import (
 	"path/filepath"
 )
 
+//GetInputLocation get folder location and return if it exists
+func GetInputLocation(inputLocation string) (string, bool) {
+	label := "Please enter file or folder name"
+
+	if len(inputLocation) == 0 {
+		inputLocation = InputPrompt(label, true)
+	}
+
+	ok, err := IsValidFolder(inputLocation)
+	if !ok {
+		if err != nil {
+			fmt.Printf("Not a valid file or folder. \n")
+			return InputPrompt(label, true), ok
+		}
+	}
+
+	return inputLocation, ok
+}
+
 //InputPrompt ask for a input value
 func InputPrompt(label string, required bool) string {
 	input := bufio.NewScanner(os.Stdin)

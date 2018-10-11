@@ -81,7 +81,7 @@ func NewImportArticleService(config configs.ClientConfiguration) *ImportArticleS
 
 //CreateOrUpdateArticle save article from input filename
 func (s *ImportArticleService) CreateOrUpdateArticle(filename string) {
-	inputLocation, isFolder := s.getInputLocation(filename)
+	inputLocation, isFolder := GetInputLocation(filename)
 	if isFolder {
 		subDirToSkip := []string{".git", ".DS_Store"}
 		err := IterateFolder(inputLocation, "md", subDirToSkip, s.saveArticle)
@@ -93,24 +93,6 @@ func (s *ImportArticleService) CreateOrUpdateArticle(filename string) {
 	}
 
 	s.saveArticle(inputLocation)
-}
-
-func (s *ImportArticleService) getInputLocation(inputLocation string) (string, bool) {
-	label := "Please enter file or folder name"
-
-	if len(inputLocation) == 0 {
-		inputLocation = InputPrompt(label, true)
-	}
-
-	ok, err := IsValidFolder(inputLocation)
-	if !ok {
-		if err != nil {
-			fmt.Printf("Not a valid file or folder. \n")
-			return InputPrompt(label, true), ok
-		}
-	}
-
-	return inputLocation, ok
 }
 
 func (s *ImportArticleService) loadImportArticle(filename string) (*ImportArticle, error) {
@@ -160,6 +142,27 @@ func (s *ImportArticleService) saveArticle(filename string) {
 		}
 	}
 
+	importArticle.ID = savedArticleID
+
+	if err := s.saveMarkdownFile(importArticle, filename); err != nil {
+		log.Error(err.Error())
+	}
+
+}
+
+func (s *ImportArticleService) saveMarkdownFile(importArticle *ImportArticle, filename string) error {
+
+	data, err := frontmatter.Marshal(importArticle)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *ImportArticleService) saveImages(id string, directory string, images []string) error {
