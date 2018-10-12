@@ -38,7 +38,7 @@ func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*goarticl
 	c := session.DB(r.DatabaseName).C("articles")
 	results := goarticles.Articles{}
 	if err := services.NewError(
-		c.Find(query).All(&results),
+		c.Find(query).Sort("-publishdate").All(&results),
 		"error retrieving data",
 		"DatabaseError",
 		false); err != nil {
