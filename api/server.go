@@ -50,6 +50,7 @@ func (h RouteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		switch e := err.(type) {
 		case services.Error:
+			log.Error(e.ErrorDetails())
 			if e.ShouldDisplay() {
 				errorData, _ := json.Marshal(e)
 				w.WriteHeader(e.Status())
@@ -59,7 +60,6 @@ func (h RouteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			w.WriteHeader(e.Status())
 		default:
-
 			//TODO: return better error
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}

@@ -10,6 +10,7 @@ type Error interface {
 	error
 	Status() int
 	ShouldDisplay() bool
+	ErrorDetails() string
 }
 
 //APIError stores error information
@@ -19,6 +20,7 @@ type APIError struct {
 	Type          string `json:"type"`
 	Code          int    `json:"-"`
 	Private       bool   `json:"-"`
+	InnerMessage  string `json:"-"`
 }
 
 //MarshalJSON custom marshaller for error information
@@ -64,8 +66,10 @@ func NewError(err error, message string, errorType string, private bool) *APIErr
 		apiError.Code = 500
 	}
 
+	apiError.InnerMessage = err.Error()
+
 	if !private {
-		apiError.MessageDetail = err.Error()
+		apiError.MessageDetail = apiError.InnerMessage
 	}
 
 	return apiError
@@ -74,6 +78,11 @@ func NewError(err error, message string, errorType string, private bool) *APIErr
 //Error returns error message
 func (e APIError) Error() string {
 	return e.Message
+}
+
+//ErrorDetails returns detailed error message
+func (e APIError) ErrorDetails() string {
+	return e.InnerMessage
 }
 
 //Status returns status code

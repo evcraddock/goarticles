@@ -20,6 +20,9 @@ type ArticleRepository struct {
 
 //CreateArticleRepository creates a new repository
 func CreateArticleRepository(server, databaseName string) *ArticleRepository {
+	log.Debugf("Database Server: %v", server)
+	log.Debugf("Database Name: %v", databaseName)
+
 	return &ArticleRepository{
 		Server:       server,
 		DatabaseName: databaseName,
@@ -28,6 +31,7 @@ func CreateArticleRepository(server, databaseName string) *ArticleRepository {
 
 //GetArticles returns queried articles from database
 func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*goarticles.Articles, error) {
+	log.Debugf("Connecting to database %v", r.Server)
 	session, err := mgo.Dial(r.Server)
 	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
 		return nil, err

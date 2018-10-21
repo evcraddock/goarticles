@@ -40,7 +40,6 @@ func CreateNewStorage(projectName, bucketName string) StorageRepository {
 
 // Creates the new bucket.
 func (store *StorageRepository) createBucket(ctx context.Context, bucketName string) *storage.BucketHandle {
-
 	bucket := store.client.Bucket(bucketName)
 
 	if err := bucket.Create(ctx, store.projectID, nil); err != nil {
