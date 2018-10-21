@@ -1,0 +1,66 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: goarticles-api
+  labels:
+    app: goarticles-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: goarticles-api
+    spec:
+      volumes:
+      - name: google-cloud-key
+        secret:
+          secretName: erikvancraddock-json-key
+      containers:
+      - name: goarticles-api
+        volumeMounts:
+        - name: google-cloud-key
+          mountPath: /var/secrets/google
+        image: gcr.io/erikvancraddock/goarticles:1.03
+        env:
+        - name: GOA_SERVER_PORT
+          value: "8080"
+        - name: GOA_LOG_LEVEL
+          value: "debug"
+        - name: GOA_DB_ADDRESS
+          value: "goarticles-db-mongodb-replicaset"
+        - name: GOA_DB_PORT
+          value: "27017"
+        - name: GOA_DB_DATABASENAME
+          value: "articleDB"
+        - name: GOA_AUTH_DOMAIN
+          value: "erikvan.auth0.com"
+        - name: GOA_AUTH_AUDIENCE
+          value: "https://api.erikvancraddock.com"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/var/secrets/google/key.json"
+        - name: GOA_DB_TIMEOUT
+          value: "15s"
+        - name: GOA_GCP_PROJECTID
+          value: "erikvancraddock"
+        - name: GOA_GCP_BUCKETNAME
+          value: "kube-articles"
+        - name: ORIGIN_ALLOWED
+          value:
+        command:
+        ports:
+          - containerPort: 8080
+      imagePullSecrets:
+      - name: google-cloud-key
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: goarticles-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: goarticles-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

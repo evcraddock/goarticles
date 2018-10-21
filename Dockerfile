@@ -8,6 +8,6 @@ RUN  apk update && \
      apk add ca-certificates
 WORKDIR /app
 COPY --from=build-env /go/bin /app/
-COPY gcp.json /app/gcp.json
-ENTRYPOINT ./goarticles-api
+COPY version /app/version
+ENTRYPOINT ./goarticles-api >/var/log/app.log
 EXPOSE 8000
