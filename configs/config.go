@@ -20,8 +20,9 @@ type Configuration struct {
 
 //ServerConfiguration server config data
 type ServerConfiguration struct {
-	Port     string `yaml:"port"`
-	LogLevel string `yaml:"loglevel"`
+	Port     string        `yaml:"port"`
+	LogLevel string        `yaml:"loglevel"`
+	Timeout  time.Duration `yaml:"timeout"`
 }
 
 //DatabaseConfiguration database config data
@@ -76,6 +77,7 @@ func LoadEnvironmentVariables() (*Configuration, error) {
 		ServerConfiguration{
 			Port:     os.Getenv("GOA_SERVER_PORT"),
 			LogLevel: os.Getenv("GOA_LOG_LEVEL"),
+			Timeout:  timeout,
 		},
 		DatabaseConfiguration{
 			Address:      os.Getenv("GOA_DB_ADDRESS"),

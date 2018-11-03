@@ -8,22 +8,18 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/evcraddock/goarticles/services"
 	log "github.com/sirupsen/logrus"
 
-	"net/http"
-
-	"encoding/json"
-
 	"bytes"
-
-	"time"
-
+	"encoding/json"
 	"io"
+	"net/http"
+	"time"
 
 	"github.com/ericaro/frontmatter"
 	"github.com/evcraddock/goarticles"
 	"github.com/evcraddock/goarticles/configs"
-	"github.com/patrickmn/go-cache"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -45,37 +41,24 @@ type ImportArticle struct {
 //ImportArticleService service used to handle interactions with the API
 type ImportArticleService struct {
 	URL         string
-	AuthURL     string
-	Auth        AuthRequestBody
 	AccessToken string
-	Cache       cache.Cache
-}
-
-//AuthRequestBody request headers for getting authorization token
-type AuthRequestBody struct {
-	GrantType    string `json:"grant_type"`
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	Audience     string `json:"audience"`
-}
-
-//AuthResponse response from the authorization service
-type AuthResponse struct {
-	AccessToken string `json:"access_token"`
 }
 
 //NewImportArticleService create new article service
 func NewImportArticleService(config configs.ClientConfiguration) *ImportArticleService {
-	return &ImportArticleService{
-		URL:     config.URL,
-		AuthURL: config.Auth.URL,
-		Auth: AuthRequestBody{
+
+	accessTokenService := services.NewAccessTokenService(config.Auth.URL,
+		services.AuthRequestBody{
 			GrantType:    config.Auth.GrantType,
 			ClientID:     config.Auth.ClientID,
 			ClientSecret: config.Auth.ClientSecret,
 			Audience:     config.Auth.Audience,
 		},
-		Cache: *cache.New(5*time.Minute, 10*time.Minute),
+	)
+
+	return &ImportArticleService{
+		URL:         config.URL,
+		AccessToken: accessTokenService.GetAccessToken(),
 	}
 }
 
@@ -177,7 +160,6 @@ func (s *ImportArticleService) saveImages(id string, directory string, images []
 
 func (s *ImportArticleService) saveImage(id string, directory string, filename string) error {
 	url := s.URL + "/api/articles/" + id + "/images"
-	authToken := s.getAccessToken()
 
 	client := &http.Client{}
 	header := make(textproto.MIMEHeader)
@@ -206,7 +188,7 @@ func (s *ImportArticleService) saveImage(id string, directory string, filename s
 	writer.Close()
 
 	req, _ := http.NewRequest("POST", url, buffer)
-	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("Authorization", "Bearer "+s.AccessToken)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	res, err := client.Do(req)
@@ -226,11 +208,10 @@ func (s *ImportArticleService) saveImage(id string, directory string, filename s
 
 func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
 	url := s.URL + "/api/articles/" + id
-	authToken := s.getAccessToken()
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("Authorization", "Bearer "+s.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := client.Do(req)
@@ -255,7 +236,6 @@ func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
 
 func (s *ImportArticleService) updateArticle(importArticle ImportArticle) error {
 	url := s.URL + "/api/articles/" + importArticle.ID
-	authToken := s.getAccessToken()
 
 	article, err := s.copyTo(&importArticle)
 	if err != nil {
@@ -266,7 +246,7 @@ func (s *ImportArticleService) updateArticle(importArticle ImportArticle) error 
 	client := &http.Client{}
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewReader(b))
-	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("Authorization", "Bearer "+s.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := client.Do(req)
@@ -286,7 +266,6 @@ func (s *ImportArticleService) updateArticle(importArticle ImportArticle) error 
 
 func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goarticles.Article, error) {
 	url := s.URL + "/api/articles"
-	authToken := s.getAccessToken()
 
 	article, err := s.copyTo(&importArticle)
 	if err != nil {
@@ -298,7 +277,7 @@ func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goar
 	client := &http.Client{}
 
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
-	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("Authorization", "Bearer "+s.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := client.Do(req)
@@ -320,47 +299,6 @@ func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goar
 	}
 
 	return nil, fmt.Errorf("Error updating article with status: %v", res.Status)
-}
-
-func (s *ImportArticleService) getAccessToken() string {
-
-	if token, found := s.getTokenFromCache(); found {
-		return token
-	}
-
-	b, _ := json.Marshal(s.Auth)
-	res, err := http.Post(s.AuthURL, "application/json", bytes.NewReader(b))
-	if err != nil {
-		log.Error("error getting token: %v", err.Error())
-	}
-
-	defer res.Body.Close()
-
-	resBody, _ := ioutil.ReadAll(res.Body)
-	authRes := &AuthResponse{}
-	if err := json.Unmarshal(resBody, authRes); err != nil {
-		log.Error("error decoding body: %v", err.Error())
-	}
-
-	s.saveTokenToCache(authRes.AccessToken)
-
-	return authRes.AccessToken
-}
-
-func (s *ImportArticleService) getTokenFromCache() (string, bool) {
-
-	token := ""
-
-	x, found := s.Cache.Get("token")
-	if found {
-		token = x.(string)
-	}
-
-	return token, found
-}
-
-func (s *ImportArticleService) saveTokenToCache(token string) {
-	s.Cache.Set("token", token, cache.DefaultExpiration)
 }
 
 func (s *ImportArticleService) copyFrom(article *goarticles.Article) (*ImportArticle, error) {

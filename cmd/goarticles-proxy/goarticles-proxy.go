@@ -1,13 +1,13 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
-
+	"flag"
 	"os"
 
-	"flag"
+	"github.com/evcraddock/goarticles/proxy"
 
-	"github.com/evcraddock/goarticles/api"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/evcraddock/goarticles/configs"
 )
 
@@ -19,9 +19,9 @@ func main() {
 	flag.Parse()
 
 	log.Info("Loading configuration from environment variables")
-	config, err := configs.LoadEnvironmentVariables()
+	config, err := configs.LoadProxyEnvironmentVariables()
 	if err != nil {
-		config, err = configs.LoadConfigFile(*configFile)
+		config, err = configs.LoadProxyConfigFile(*configFile)
 		if err != nil {
 			log.Error(err.Error())
 			panic(err)
@@ -32,8 +32,8 @@ func main() {
 	log.Infof("LogLevel: %v", loglevel)
 	log.SetLevel(loglevel)
 
-	api.NewServer(config)
-
+	reverseProxy := proxy.NewServer(config)
+	reverseProxy.Start()
 }
 
 func setLogLevel(logLevel string) log.Level {
