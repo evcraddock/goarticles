@@ -111,9 +111,6 @@ func NewRouter(config *configs.Configuration) http.Handler {
 	articleCtrl := CreateArticleController(config.Database.Address, config.Database.Port, config.Database.DatabaseName)
 	imageCtrl := CreateImageController(config.Storage.Project, config.Storage.Bucket)
 
-	//TODO: Add Not Found Hander
-	//TODO: Add method not allowed handler
-
 	routes = append(routes, articleCtrl.GetArticleRoutes()...)
 	routes = append(routes, imageCtrl.GetImageRoutes()...)
 	routes = append(routes, GetHealthRoutes()...)

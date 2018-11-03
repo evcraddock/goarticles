@@ -1,0 +1,29 @@
+version: '2'
+services:
+  api:
+    container_name: goarticles_api
+    hostname: goarticles-api
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    image: gcr.io/erikvancraddock/goarticles:latest
+    env_file:
+      - ../env.list
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mongo
+    networks:
+      - all
+  mongo:
+    container_name: goarticles_db
+    hostname: goarticlesdb
+    command: mongod  --bind_ip_all
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    networks:
+      - all
+
+networks:
+  all:
