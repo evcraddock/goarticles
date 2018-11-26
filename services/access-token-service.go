@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -51,7 +51,7 @@ func (s *AccessTokenService) GetAccessToken() string {
 	b, _ := json.Marshal(s.Auth)
 	res, err := http.Post(s.AuthURL, "application/json", bytes.NewReader(b))
 	if err != nil {
-		log.Error("error getting token: %v", err.Error())
+		log.Error("error getting token: " + err.Error())
 	}
 
 	defer res.Body.Close()
@@ -59,7 +59,7 @@ func (s *AccessTokenService) GetAccessToken() string {
 	resBody, _ := ioutil.ReadAll(res.Body)
 	authRes := &AuthResponse{}
 	if err := json.Unmarshal(resBody, authRes); err != nil {
-		log.Error("error decoding body: %v", err.Error())
+		log.Error("error decoding body: " + err.Error())
 	}
 
 	s.Cache.Set("token", authRes.AccessToken, cache.DefaultExpiration)

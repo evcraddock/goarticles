@@ -30,7 +30,7 @@ type ReverseProxy struct {
 func NewServer(config *configs.ProxyConfiguration) ReverseProxy {
 	targetURL, err := url.Parse(config.Server.ForwardAPI)
 	if err != nil {
-		log.Error("Url is bad: %v", err.Error())
+		log.Error("Url is bad: " + err.Error())
 		os.Exit(1)
 	}
 
