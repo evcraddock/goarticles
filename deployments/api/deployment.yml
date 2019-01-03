@@ -20,7 +20,7 @@ spec:
         volumeMounts:
         - name: google-cloud-key
           mountPath: /var/secrets/google
-        image: gcr.io/erikvancraddock/goarticles:1.03
+        image: gcr.io/erikvancraddock/goarticles:1.04
         env:
         - name: GOA_SERVER_PORT
           value: "8080"
@@ -50,7 +50,7 @@ spec:
         ports:
           - containerPort: 8080
       imagePullSecrets:
-      - name: google-cloud-key
+      - name: evc-json-key
 ---
 kind: Service
 apiVersion: v1
