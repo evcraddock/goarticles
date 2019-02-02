@@ -43,7 +43,7 @@ spec:
         - name: GOA_GCP_PROJECTID
           value: "erikvancraddock"
         - name: GOA_GCP_BUCKETNAME
-          value: "kube-articles"
+          value: "goarticle-images"
         - name: ORIGIN_ALLOWED
           value:
         command:
@@ -57,10 +57,10 @@ apiVersion: v1
 metadata:
   name: goarticles-api
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: goarticles-api
   ports:
   - protocol: TCP
-    port: 80
+    port: 8080
     targetPort: 8080
