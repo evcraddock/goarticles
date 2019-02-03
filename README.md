@@ -57,7 +57,7 @@ Otherwise a new record will be created
 * only images in the 'images' collection will be uploaded. The banner value should refer to an image in the images collection
 
 ## API
-### Installing
+#### Installing
 
 ```
 go build -o $GOPATH/bin/goarticles-api cmd/goarticles-api/goarticles-api.go
