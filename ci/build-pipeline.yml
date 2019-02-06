@@ -28,7 +28,7 @@ jobs:
   public: true
   plan:
   - get: source
-    trigger: true
+    trigger: false
   - task: run-tests
     file: source/ci/run-tests.yml
 
@@ -49,3 +49,17 @@ jobs:
         tag_as_latest: true
   - put: version
     params: {file: version/version}
+
+- name: deploy-gcloud
+  plan:
+  - get: source
+    trigger: true
+    passed: [build]
+  - get: docker-file
+    trigger: true
+    passed: [build]
+  - get: version
+    trigger: true
+    passed: [build]
+  - task: deploy
+    file: source/ci/deploy.yml
