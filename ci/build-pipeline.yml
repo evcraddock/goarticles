@@ -53,6 +53,7 @@ jobs:
 - name: deploy-gcloud
   plan:
   - get: source
+<<<<<<< HEAD
     trigger: false
     passed: [build]
   - get: docker-file
@@ -60,6 +61,15 @@ jobs:
     passed: [build]
   - get: version
     trigger: false
+=======
+    trigger: true
+    passed: [build]
+  - get: docker-file
+    trigger: true
+    passed: [build]
+  - get: version
+    trigger: true
+>>>>>>> f0a566c... adds deployment to google cloud to the pipeline
     passed: [build]
   - task: deploy
     file: source/ci/deploy.yml
