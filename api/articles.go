@@ -35,8 +35,8 @@ func CreateArticleController(dbaddress, dbport, dbname string) ArticleController
 //GetArticleRoutes return list of routes for articles
 func (c *ArticleController) GetArticleRoutes() []Route {
 	return []Route{
-		{"GET", "/api/articles", true, c.GetAll},
-		{"GET", "/api/articles/{id}", true, c.GetByID},
+		{"GET", "/api/articles", false, c.GetAll},
+		{"GET", "/api/articles/{id}", false, c.GetByID},
 		{"POST", "/api/articles", true, c.Add},
 		{"PUT", "/api/articles/{id}", true, c.Update},
 		{"DELETE", "/api/articles/{id}", true, c.Delete},

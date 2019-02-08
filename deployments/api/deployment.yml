@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: default
+data:
+  GOA_SERVER_PORT: "8080"
+  GOA_LOG_LEVEL: "debug"
+  GOA_DB_ADDRESS: "goarticles-db-mongodb-replicaset"
+  GOA_DB_PORT: "27017"
+  GOA_DB_DATABASENAME: "articleDB"
+  GOA_AUTH_DOMAIN: "erikvan.auth0.com"
+  GOA_AUTH_AUDIENCE: "https://api.erikvancraddock.com"
+  GOOGLE_APPLICATION_CREDENTIALS: "/var/secrets/google/key.json"
+  GOA_DB_TIMEOUT: "15s"
+  GOA_GCP_PROJECTID: "erikvancraddock"
+  GOA_GCP_BUCKETNAME: "goarticle-images"
+  ORIGIN_ALLOWED: ""
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: goarticles-api
+  labels:
+    app: goarticles-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: goarticles-api
+    spec:
+      volumes:
+      - name: google-cloud-key
+        secret:
+          secretName: erikvancraddock-json-key
+      containers:
+      - name: goarticles-api
+        volumeMounts:
+        - name: google-cloud-key
+          mountPath: /var/secrets/google
+        image: ((IMAGE_NAME))
+        envFrom:
+        - configMapRef:
+            name: api-config
+        ports:
+          - containerPort: 8080
+      imagePullSecrets:
+      - name: evc-json-key
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: goarticles-api
+spec:
+  type: NodePort
+  selector:
+    app: goarticles-api
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
