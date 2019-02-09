@@ -36,7 +36,7 @@ jobs:
   public: true
   plan:
   - get: source
-    trigger: true
+    trigger: false
     passed: [tests]
   - get: version
     params: {bump: patch}
@@ -53,13 +53,13 @@ jobs:
 - name: deploy-gcloud
   plan:
   - get: source
-    trigger: true
+    trigger: false
     passed: [build]
   - get: docker-file
-    trigger: true
+    trigger: false
     passed: [build]
   - get: version
-    trigger: true
+    trigger: false
     passed: [build]
   - task: deploy
     file: source/ci/deploy.yml
