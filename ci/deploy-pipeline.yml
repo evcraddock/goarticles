@@ -24,28 +24,13 @@ resources:
   type: docker-image
 
 jobs:
-- name: tests
-  public: true
+- name: deploy-gcloud
   plan:
   - get: source
     trigger: false
-  - task: run-tests
-    file: source/ci/run-tests.yml
-
-- name: build
-  public: true
-  plan:
-  - get: source
+  - get: docker-file
     trigger: false
-    passed: [tests]
   - get: version
-    params: {bump: patch}
-  - task: build
-    file: source/ci/build.yml
-  - put: docker-file
-    params:
-        build: built/
-        tag: version/version
-        tag_as_latest: true
-  - put: version
-    params: {file: version/version}
+    trigger: false
+  - task: deploy
+    file: source/ci/deploy.yml
