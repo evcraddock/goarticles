@@ -22,7 +22,6 @@ type StorageRepository struct {
 func CreateNewStorage(projectName, bucketName string) StorageRepository {
 	ctx := context.Background()
 	storageClient, err := storage.NewClient(ctx)
-
 	if err != nil {
 		panic("Failed to create client: " + err.Error())
 	}
@@ -43,7 +42,7 @@ func (store *StorageRepository) createBucket(ctx context.Context, bucketName str
 	bucket := store.client.Bucket(bucketName)
 
 	if err := bucket.Create(ctx, store.projectID, nil); err != nil {
-		log.Infof("Failed to create bucket: %v", err)
+		log.Debugf("Failed to create bucket: %v", err)
 	}
 
 	return bucket

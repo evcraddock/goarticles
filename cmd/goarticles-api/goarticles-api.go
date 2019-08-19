@@ -18,9 +18,10 @@ func main() {
 	configFile := flag.String("configfile", "", "yaml configuration file (optional)")
 	flag.Parse()
 
-	log.Info("Loading configuration from environment variables")
+	log.Debug("Loading configuration")
 	config, err := configs.LoadEnvironmentVariables()
 	if err != nil {
+		log.Debug("no environment variables found, checking config file")
 		config, err = configs.LoadConfigFile(*configFile)
 		if err != nil {
 			log.Error(err.Error())
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	loglevel := setLogLevel(config.Server.LogLevel)
-	log.Infof("LogLevel: %v", loglevel)
+	log.Debugf("LogLevel: %v", loglevel)
 	log.SetLevel(loglevel)
 
 	api.NewServer(config)
