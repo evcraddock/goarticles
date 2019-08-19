@@ -1,8 +1,10 @@
 **/debug
 **/debug.test
 .idea
+.build/*
 env.list
 gcp.json
 config.yml
 cli-config.yml
 proxy-config.yml
+*.swp

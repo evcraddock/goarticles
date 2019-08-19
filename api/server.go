@@ -102,6 +102,7 @@ func NewServer(config *configs.Configuration) {
 
 //NewRouter creates a new router
 func NewRouter(config *configs.Configuration) http.Handler {
+	log.Debug("NewRouter started")
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	auth := services.NewAuthorization(config.Authentication.Domain, config.Authentication.Audience)
@@ -128,6 +129,7 @@ func NewRouter(config *configs.Configuration) http.Handler {
 		r.Handle(route.Path, handler).Methods(route.Method)
 	}
 
+	log.Debug("NewRouter finished")
 	return handleCORS(r)
 }
 

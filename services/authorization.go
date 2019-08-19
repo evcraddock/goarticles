@@ -37,6 +37,7 @@ type JSONWebKeys struct {
 
 //NewAuthorization create new authorization
 func NewAuthorization(domain, audience string) Authorization {
+	log.Debug("NewAuthorization started")
 	auth := Authorization{
 		domain:   domain,
 		audience: audience,
@@ -48,6 +49,7 @@ func NewAuthorization(domain, audience string) Authorization {
 		ErrorHandler:        NotAuthorizedError,
 	})
 
+	log.Debug("NewAuthorziation finished")
 	return auth
 }
 

@@ -25,10 +25,12 @@ type ArticleController struct {
 
 //CreateArticleController creates controller and sets routes
 func CreateArticleController(dbaddress, dbport, dbname string) ArticleController {
+	log.Debugf("CreateArticleController started")
 	dbserver := fmt.Sprintf("%v:%v", dbaddress, dbport)
 	repository := repo.CreateArticleRepository(dbserver, dbname)
 	controller := ArticleController{repository: *repository}
 
+	log.Debugf("CreateArticleController finished")
 	return controller
 }
 

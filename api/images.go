@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/evcraddock/goarticles"
 	"github.com/evcraddock/goarticles/repo"
 	"github.com/evcraddock/goarticles/services"
@@ -19,10 +21,11 @@ type ImageController struct {
 
 //CreateImageController creates controller and sets routes
 func CreateImageController(projectname, bucketname string) ImageController {
-
+	log.Debugf("CreateImageController started")
 	storage := repo.CreateNewStorage(projectname, bucketname)
 	controller := ImageController{storage: storage}
 
+	log.Debugf("CreateImageController finished")
 	return controller
 }
 
