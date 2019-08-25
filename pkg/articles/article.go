@@ -1,4 +1,4 @@
-package goarticles
+package articles
 
 import (
 	"encoding/json"

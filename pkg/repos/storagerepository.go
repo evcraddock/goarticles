@@ -1,4 +1,4 @@
-package repo
+package repos
 
 import (
 	"context"
@@ -7,8 +7,9 @@ import (
 	"mime/multipart"
 
 	"cloud.google.com/go/storage"
-	"github.com/evcraddock/goarticles/services"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/evcraddock/goarticles/internal/services"
 )
 
 //StorageRepository represents a google cloud storage account

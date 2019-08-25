@@ -1,14 +1,11 @@
 package configs
 
 import (
+	"fmt"
 	"io/ioutil"
-
-	log "github.com/sirupsen/logrus"
-
 	"os"
 
-	"fmt"
-
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 

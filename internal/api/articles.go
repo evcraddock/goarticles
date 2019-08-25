@@ -2,32 +2,31 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-
-	"fmt"
-	"net/url"
-
-	"github.com/evcraddock/goarticles"
-	"github.com/evcraddock/goarticles/repo"
-	"github.com/evcraddock/goarticles/services"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/evcraddock/goarticles/internal/services"
+	"github.com/evcraddock/goarticles/pkg/articles"
+	"github.com/evcraddock/goarticles/pkg/repos"
 )
 
 //ArticleController model
 type ArticleController struct {
-	repository repo.ArticleRepository
+	repository repos.ArticleRepository
 }
 
 //CreateArticleController creates controller and sets routes
 func CreateArticleController(dbaddress, dbport, dbname string) ArticleController {
 	log.Debugf("CreateArticleController started")
 	dbserver := fmt.Sprintf("%v:%v", dbaddress, dbport)
-	repository := repo.CreateArticleRepository(dbserver, dbname)
+	repository := repos.CreateArticleRepository(dbserver, dbname)
 	controller := ArticleController{repository: *repository}
 
 	log.Debugf("CreateArticleController finished")
@@ -88,7 +87,7 @@ func (c *ArticleController) GetAll(w http.ResponseWriter, r *http.Request) error
 
 //Add adds new article
 func (c *ArticleController) Add(w http.ResponseWriter, r *http.Request) error {
-	var article goarticles.Article
+	var article articles.Article
 
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
@@ -123,7 +122,7 @@ func (c *ArticleController) Update(w http.ResponseWriter, r *http.Request) error
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	var article goarticles.Article
+	var article articles.Article
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		return services.NewError(err, "body is invalid", "FormatError", false)

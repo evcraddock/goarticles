@@ -7,8 +7,8 @@ import (
 
 	"flag"
 
-	"github.com/evcraddock/goarticles/api"
-	"github.com/evcraddock/goarticles/configs"
+	"github.com/evcraddock/goarticles/internal/api"
+	"github.com/evcraddock/goarticles/internal/configs"
 )
 
 func main() {
