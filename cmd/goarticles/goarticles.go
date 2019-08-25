@@ -4,9 +4,10 @@ import (
 	"flag"
 	"os"
 
-	"github.com/evcraddock/goarticles/cli"
-	"github.com/evcraddock/goarticles/configs"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/evcraddock/goarticles/internal/cli"
+	"github.com/evcraddock/goarticles/internal/configs"
 )
 
 func main() {
@@ -27,6 +28,6 @@ func main() {
 
 	log.SetLevel(log.InfoLevel)
 
-	articleService := cli.NewImportArticleService(*config)
+	articleService := cli.NewArticleImporter(*config)
 	articleService.CreateOrUpdateArticle(*filesToProcess)
 }

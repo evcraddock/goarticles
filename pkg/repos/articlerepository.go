@@ -1,4 +1,4 @@
-package repo
+package repos
 
 import (
 	"gopkg.in/mgo.v2"
@@ -8,8 +8,8 @@ import (
 
 	"fmt"
 
-	"github.com/evcraddock/goarticles"
-	"github.com/evcraddock/goarticles/services"
+	"github.com/evcraddock/goarticles/internal/services"
+	"github.com/evcraddock/goarticles/pkg/articles"
 )
 
 //ArticleRepository model
@@ -30,7 +30,7 @@ func CreateArticleRepository(server, databaseName string) *ArticleRepository {
 }
 
 //GetArticles returns queried articles from database
-func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*goarticles.Articles, error) {
+func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*articles.Articles, error) {
 	log.Debugf("Connecting to database %v", r.Server)
 	session, err := mgo.Dial(r.Server)
 	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
@@ -40,7 +40,7 @@ func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*goarticl
 	defer session.Close()
 
 	c := session.DB(r.DatabaseName).C("articles")
-	results := goarticles.Articles{}
+	results := articles.Articles{}
 	if err := services.NewError(
 		c.Find(query).Sort("-publishdate").All(&results),
 		"error retrieving data",
@@ -53,7 +53,7 @@ func (r *ArticleRepository) GetArticles(query map[string]interface{}) (*goarticl
 }
 
 //GetArticle returns article by Id
-func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
+func (r *ArticleRepository) GetArticle(id string) (*articles.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
 	}
 
 	c := session.DB(r.DatabaseName).C("articles")
-	result := goarticles.Article{}
+	result := articles.Article{}
 	if err := services.NewError(c.FindId(
 		bson.ObjectIdHex(id)).One(&result),
 		"article doesn't exist",
@@ -80,7 +80,7 @@ func (r *ArticleRepository) GetArticle(id string) (*goarticles.Article, error) {
 }
 
 //AddArticle add article to database
-func (r *ArticleRepository) AddArticle(article goarticles.Article) (*goarticles.Article, error) {
+func (r *ArticleRepository) AddArticle(article articles.Article) (*articles.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (r *ArticleRepository) AddArticle(article goarticles.Article) (*goarticles.
 }
 
 //UpdateArticle updates article
-func (r *ArticleRepository) UpdateArticle(article goarticles.Article) (*goarticles.Article, error) {
+func (r *ArticleRepository) UpdateArticle(article articles.Article) (*articles.Article, error) {
 	session, err := mgo.Dial(r.Server)
 	if err := services.NewError(err, "failed to establish connection to database", "DatabaseConnection", false); err != nil {
 		return nil, err

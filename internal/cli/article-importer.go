@@ -1,51 +1,36 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net/http"
 	"net/textproto"
 	"os"
 	"path/filepath"
-
-	"github.com/evcraddock/goarticles/services"
-	log "github.com/sirupsen/logrus"
-
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/ericaro/frontmatter"
-	"github.com/evcraddock/goarticles"
-	"github.com/evcraddock/goarticles/configs"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/evcraddock/goarticles/internal/configs"
+	"github.com/evcraddock/goarticles/internal/services"
+	"github.com/evcraddock/goarticles/internal/utils"
+	"github.com/evcraddock/goarticles/pkg/articles"
 )
 
-//ImportArticle represents and article that can be imported
-type ImportArticle struct {
-	ID          string   `yaml:"id"`
-	Title       string   `yaml:"title"`
-	URL         string   `yaml:"url"`
-	Banner      string   `yaml:"banner"`
-	Images      []string `yaml:"images"`
-	PublishDate string   `yaml:"publishDate"`
-	Author      string   `yaml:"author"`
-	Categories  []string `yaml:"categories"`
-	Tags        []string `yaml:"tags"`
-	Layout      string   `yaml:"layout"`
-	Content     string   `fm:"content" yaml:"-"`
-}
-
-//ImportArticleService service used to handle interactions with the API
-type ImportArticleService struct {
+//ArticleImporter service used to handle interactions with the API
+type ArticleImporter struct {
 	URL         string
 	AccessToken string
 }
 
-//NewImportArticleService create new article service
-func NewImportArticleService(config configs.ClientConfiguration) *ImportArticleService {
+//NewArticleImporter create new article service
+func NewArticleImporter(config configs.ClientConfiguration) *ArticleImporter {
 
 	accessTokenService := services.NewAccessTokenService(config.Auth.URL,
 		services.AuthRequestBody{
@@ -56,18 +41,18 @@ func NewImportArticleService(config configs.ClientConfiguration) *ImportArticleS
 		},
 	)
 
-	return &ImportArticleService{
+	return &ArticleImporter{
 		URL:         config.URL,
 		AccessToken: accessTokenService.GetAccessToken(),
 	}
 }
 
 //CreateOrUpdateArticle save article from input filename
-func (s *ImportArticleService) CreateOrUpdateArticle(filename string) {
-	inputLocation, isFolder := GetInputLocation(filename)
+func (s *ArticleImporter) CreateOrUpdateArticle(filename string) {
+	inputLocation, isFolder := utils.GetInputLocation(filename)
 	if isFolder {
 		subDirToSkip := []string{".git", ".DS_Store"}
-		err := IterateFolder(inputLocation, "md", subDirToSkip, s.saveArticle)
+		err := utils.IterateFolder(inputLocation, "md", subDirToSkip, s.saveArticle)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -78,19 +63,19 @@ func (s *ImportArticleService) CreateOrUpdateArticle(filename string) {
 	s.saveArticle(inputLocation)
 }
 
-func (s *ImportArticleService) loadImportArticle(filename string) (*ImportArticle, error) {
+func (s *ArticleImporter) loadImportArticle(filename string) (*articles.ImportArticle, error) {
 	importFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	importArticle := new(ImportArticle)
+	importArticle := new(articles.ImportArticle)
 	err = frontmatter.Unmarshal(importFile, importArticle)
 
 	return importArticle, err
 }
 
-func (s *ImportArticleService) saveArticle(filename string) {
+func (s *ArticleImporter) saveArticle(filename string) {
 	importArticle, err := s.loadImportArticle(filename)
 	if err != nil {
 		log.Debugf("Unable to save file: %v\n", filename)
@@ -133,7 +118,7 @@ func (s *ImportArticleService) saveArticle(filename string) {
 
 }
 
-func (s *ImportArticleService) saveMarkdownFile(importArticle *ImportArticle, filename string) error {
+func (s *ArticleImporter) saveMarkdownFile(importArticle *articles.ImportArticle, filename string) error {
 
 	data, err := frontmatter.Marshal(importArticle)
 	if err != nil {
@@ -148,7 +133,7 @@ func (s *ImportArticleService) saveMarkdownFile(importArticle *ImportArticle, fi
 	return nil
 }
 
-func (s *ImportArticleService) saveImages(id string, directory string, images []string) error {
+func (s *ArticleImporter) saveImages(id string, directory string, images []string) error {
 	for _, filename := range images {
 		if err := s.saveImage(id, directory, filename); err != nil {
 			log.Error(err.Error())
@@ -158,7 +143,7 @@ func (s *ImportArticleService) saveImages(id string, directory string, images []
 	return nil
 }
 
-func (s *ImportArticleService) saveImage(id string, directory string, filename string) error {
+func (s *ArticleImporter) saveImage(id string, directory string, filename string) error {
 	url := s.URL + "/api/articles/" + id + "/images"
 
 	client := &http.Client{}
@@ -206,7 +191,7 @@ func (s *ImportArticleService) saveImage(id string, directory string, filename s
 	return fmt.Errorf("failed to save image with error: %v", res.Status)
 }
 
-func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
+func (s *ArticleImporter) loadArticle(id string) (*articles.ImportArticle, error) {
 	url := s.URL + "/api/articles/" + id
 
 	client := &http.Client{}
@@ -224,7 +209,7 @@ func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
 		return nil, fmt.Errorf("error: %v", res.Status)
 	}
 
-	article := &goarticles.Article{}
+	article := &articles.Article{}
 
 	body, err := ioutil.ReadAll(io.LimitReader(res.Body, 1048576))
 	if err := json.Unmarshal(body, &article); err != nil {
@@ -234,7 +219,7 @@ func (s *ImportArticleService) loadArticle(id string) (*ImportArticle, error) {
 	return s.copyFrom(article)
 }
 
-func (s *ImportArticleService) updateArticle(importArticle ImportArticle) error {
+func (s *ArticleImporter) updateArticle(importArticle articles.ImportArticle) error {
 	url := s.URL + "/api/articles/" + importArticle.ID
 
 	article, err := s.copyTo(&importArticle)
@@ -264,7 +249,7 @@ func (s *ImportArticleService) updateArticle(importArticle ImportArticle) error 
 	return fmt.Errorf("%v", res.StatusCode)
 }
 
-func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goarticles.Article, error) {
+func (s *ArticleImporter) createArticle(importArticle articles.ImportArticle) (*articles.Article, error) {
 	url := s.URL + "/api/articles"
 
 	article, err := s.copyTo(&importArticle)
@@ -301,8 +286,8 @@ func (s *ImportArticleService) createArticle(importArticle ImportArticle) (*goar
 	return nil, fmt.Errorf("Error updating article with status: %v", res.Status)
 }
 
-func (s *ImportArticleService) copyFrom(article *goarticles.Article) (*ImportArticle, error) {
-	importArticle := &ImportArticle{
+func (s *ArticleImporter) copyFrom(article *articles.Article) (*articles.ImportArticle, error) {
+	importArticle := &articles.ImportArticle{
 		ID:          article.ID.Hex(),
 		Title:       article.Title,
 		URL:         article.URL,
@@ -317,8 +302,8 @@ func (s *ImportArticleService) copyFrom(article *goarticles.Article) (*ImportArt
 	return importArticle, nil
 }
 
-func (s *ImportArticleService) copyTo(importArticle *ImportArticle) (*goarticles.Article, error) {
-	article := &goarticles.Article{
+func (s *ArticleImporter) copyTo(importArticle *articles.ImportArticle) (*articles.Article, error) {
+	article := &articles.Article{
 		Title:      importArticle.Title,
 		URL:        importArticle.URL,
 		Author:     importArticle.Author,

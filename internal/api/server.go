@@ -1,21 +1,20 @@
 package api
 
 import (
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
-
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"encoding/json"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/evcraddock/goarticles/configs"
-	"github.com/evcraddock/goarticles/services"
+	"github.com/evcraddock/goarticles/internal/configs"
+	"github.com/evcraddock/goarticles/internal/services"
 )
 
 //Route stores route data

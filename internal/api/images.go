@@ -4,25 +4,25 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/evcraddock/goarticles"
-	"github.com/evcraddock/goarticles/repo"
-	"github.com/evcraddock/goarticles/services"
-	"github.com/gorilla/mux"
+	"github.com/evcraddock/goarticles/internal/services"
+	"github.com/evcraddock/goarticles/pkg/articles"
+	"github.com/evcraddock/goarticles/pkg/repos"
 )
 
 const maxMemory = 1 * 1024 * 1024
 
 //ImageController model
 type ImageController struct {
-	storage repo.StorageRepository
+	storage repos.StorageRepository
 }
 
 //CreateImageController creates controller and sets routes
 func CreateImageController(projectname, bucketname string) ImageController {
 	log.Debugf("CreateImageController started")
-	storage := repo.CreateNewStorage(projectname, bucketname)
+	storage := repos.CreateNewStorage(projectname, bucketname)
 	controller := ImageController{storage: storage}
 
 	log.Debugf("CreateImageController finished")
@@ -51,7 +51,7 @@ func (c *ImageController) Add(w http.ResponseWriter, r *http.Request) error {
 		for _, fileHeader := range fileHeaders {
 			file, _ := fileHeader.Open()
 
-			image := goarticles.ArticleImage{
+			image := articles.ArticleImage{
 				ArticleID: articleID,
 				FileName:  fileHeader.Filename,
 				File:      file,
@@ -75,7 +75,7 @@ func (c *ImageController) GetByFilename(w http.ResponseWriter, r *http.Request) 
 	articleID := vars["id"]
 	filename := vars["filename"]
 
-	image := goarticles.ArticleImage{
+	image := articles.ArticleImage{
 		ArticleID: articleID,
 		FileName:  filename,
 		File:      nil,
@@ -99,7 +99,7 @@ func (c *ImageController) DeleteByFilename(w http.ResponseWriter, r *http.Reques
 	articleID := vars["id"]
 	filename := vars["filename"]
 
-	image := goarticles.ArticleImage{
+	image := articles.ArticleImage{
 		ArticleID: articleID,
 		FileName:  filename,
 		File:      nil,
