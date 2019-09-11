@@ -12,6 +12,11 @@ github.com/auth0/go-jwt-middleware
 github.com/dgrijalva/jwt-go
 # github.com/ericaro/frontmatter v0.0.0-20141225210444-9fedef9406e4
 github.com/ericaro/frontmatter
+# github.com/go-playground/locales v0.12.1
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.16.0
+github.com/go-playground/universal-translator
 # github.com/golang/protobuf v1.1.0
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
@@ -27,10 +32,18 @@ github.com/gorilla/context
 github.com/gorilla/handlers
 # github.com/gorilla/mux v1.6.2
 github.com/gorilla/mux
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
+# github.com/leodido/go-urn v1.1.0
+github.com/leodido/go-urn
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
 # github.com/sirupsen/logrus v1.0.5
 github.com/sirupsen/logrus
+# github.com/spf13/cobra v0.0.5
+github.com/spf13/cobra
+# github.com/spf13/pflag v1.0.3
+github.com/spf13/pflag
 # go.opencensus.io v0.13.0
 go.opencensus.io/trace
 go.opencensus.io/exporter/stackdriver/propagation
@@ -122,6 +135,8 @@ google.golang.org/grpc/tap
 google.golang.org/grpc/transport
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/internal/grpcrand
+# gopkg.in/go-playground/validator.v9 v9.29.1
+gopkg.in/go-playground/validator.v9
 # gopkg.in/mgo.v2 v2.0.0-20160818020120-3f83fa500528
 gopkg.in/mgo.v2/bson
 gopkg.in/mgo.v2

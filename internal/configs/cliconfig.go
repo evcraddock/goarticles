@@ -11,7 +11,7 @@ import (
 
 //ClientConfiguration top level client config object
 type ClientConfiguration struct {
-	URL  string     `yaml:"api-url"`
+	URL  string     `yaml:"api-url" validate:"required"`
 	Auth AuthConfig `yaml:"auth"`
 }
 
@@ -38,17 +38,14 @@ func LoadCliConfig(configFile string) (*ClientConfiguration, error) {
 //LoadCliConfigFromFile loading configuration from yaml file
 func LoadCliConfigFromFile(filename string) (*ClientConfiguration, error) {
 	b, err := ioutil.ReadFile(filename)
-
 	if err != nil {
-		log.Error(err.Error())
-		return nil, err
+		return nil, fmt.Errorf("Unable to load: %s", filename)
 	}
 
 	var config ClientConfiguration
 	err = yaml.Unmarshal(b, &config)
 	if err != nil {
-		log.Error(err.Error())
-		return nil, err
+		return nil, fmt.Errorf("The configuration file %s is malformed", filename)
 	}
 
 	return &config, nil
