@@ -6,7 +6,8 @@
 ### Installing
 
 ```
-go build -o $GOPATH/bin/goarticles cmd/goarticles/goarticles.go
+go get github.com/evcraddock/goarticles
+
 ```
 
 ### Configuration
@@ -25,7 +26,7 @@ CLI_AUTH_AUDIENCE: {https://api.yourdomain.com}
 
 ### Usage
 ```
-goarticles -files={folder with front matter files}
+goarticles import -files={folder with front matter files}
 ```
 
 goarticles will attempt to process every file with the ext .md in the folder specified and all of it's subfolders.
