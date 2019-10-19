@@ -109,9 +109,11 @@ func NewRouter(config *configs.Configuration) http.Handler {
 	var routes []Route
 
 	articleCtrl := CreateArticleController(config.Database.Address, config.Database.Port, config.Database.DatabaseName)
+	linksCtrl := CreateLinkController(config.Database.Address, config.Database.Port, config.Database.DatabaseName)
 	imageCtrl := CreateImageController(config.Storage.Project, config.Storage.Bucket)
 
 	routes = append(routes, articleCtrl.GetArticleRoutes()...)
+	routes = append(routes, linksCtrl.GetLinkRoutes()...)
 	routes = append(routes, imageCtrl.GetImageRoutes()...)
 	routes = append(routes, GetHealthRoutes()...)
 

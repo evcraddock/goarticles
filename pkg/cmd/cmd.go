@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/evcraddock/goarticles/pkg/cmd/import"
+	"github.com/evcraddock/goarticles/pkg/cmd/link"
 	"github.com/evcraddock/goarticles/pkg/cmd/version"
 )
 
@@ -24,6 +25,7 @@ func NewGorticleCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 
 	cmds.AddCommand(version.NewCmdVersion(out))
 	cmds.AddCommand(imports.NewCmdImport(out))
+	cmds.AddCommand(link.NewCmdLink(out))
 
 	return cmds
 }
